@@ -1,0 +1,10 @@
+#JSGF V1.0;
+grammar digits;
+
+<digit> = привет    |
+          как   |
+          у |
+          вас   |
+          дела;
+
+public <digits> = <digit>+;

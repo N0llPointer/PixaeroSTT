@@ -1,9 +1,15 @@
 package com.nollpointer.pixaerostt;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,12 +17,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Locale;
+
+import edu.cmu.pocketsphinx.Assets;
+import edu.cmu.pocketsphinx.Hypothesis;
+import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 
 public class MainActivity extends AppCompatActivity {
 
     private Button voiceRecognizerButton;
+    private Button voicePocketRecognizer;
+
     private TextView partialResults;
     private TextView fullResults;
 
@@ -28,12 +41,23 @@ public class MainActivity extends AppCompatActivity {
     public static String TAG = "STT";
 
 
+    private static final String KWS_SEARCH = "wakeup";
+    private static final String MENU_SEARCH = "menu";
+
+    private static final String KEYPHRASE = "well hello";
+
+    private edu.cmu.pocketsphinx.SpeechRecognizer pocketRecognizer;
+
+    private boolean isPocketOnGoing = false;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         voiceRecognizerButton = findViewById(R.id.button_voice_recognizer_android);
+        voicePocketRecognizer = findViewById(R.id.button_voice_recognizer_sphynx);
         partialResults = findViewById(R.id.text_view_partial);
         fullResults = findViewById(R.id.text_view_full);
 
@@ -41,6 +65,12 @@ public class MainActivity extends AppCompatActivity {
         recognizer.setRecognitionListener(new RecognizerListener());
 
         recognizerIntent = createRecognizerIntent();
+
+        int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+            return;
+        }
 
         voiceRecognizerButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -54,6 +84,92 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        voicePocketRecognizer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(isPocketOnGoing)
+                    pocketRecognizer.stop();
+                else
+                    pocketRecognizer.startListening(MENU_SEARCH);
+
+
+                isPocketOnGoing = !isPocketOnGoing;
+            }
+        });
+
+        runRecognizerSetup();
+
+    }
+
+    private void runRecognizerSetup(){
+        new AsyncTask<Void,Void,Exception>(){
+            @Override
+            protected void onPostExecute(Exception e) {
+               // if(e == null)
+                    //switchSearch(KWS_SEARCH);
+               // else
+                //    Log.wtf(TAG,e);
+
+                //pocketRecognizer.startListening(MENU_SEARCH);
+            }
+
+            @Override
+            protected Exception doInBackground(Void... voids) {
+                try{
+                    Assets assets = new Assets(MainActivity.this);
+                    File assetsDir = assets.syncAssets();
+                    setupRecognizer(assetsDir);
+                }catch (Exception e){
+                    return e;
+                }
+
+                return null;
+            }
+        }.execute();
+    }
+
+    private void setupRecognizer(File dir) {
+        try {
+            pocketRecognizer = SpeechRecognizerSetup.defaultSetup()
+                    .setAcousticModel(new File(dir, "ru-ptm"))
+                    .setDictionary(new File(dir, "ru.dic"))
+                    .setKeywordThreshold(1e-22f)
+                    .getRecognizer();
+        }catch (Exception e){
+            Log.wtf(TAG,e);
+        }
+
+        pocketRecognizer.addListener(new PocketRecognizerListener());
+
+        //pocketRecognizer.addKeyphraseSearch(KWS_SEARCH,KEYPHRASE);
+
+        File menuGrammar = new File(dir,"mymenu.gram");
+        pocketRecognizer.addGrammarSearch(MENU_SEARCH,menuGrammar);
+
+        Snackbar.make(findViewById(R.id.container),"Setup complete",Snackbar.LENGTH_SHORT).show();
+
+        //pocketRecognizer.startListening()
+    }
+
+    private void switchSearch(String str){
+        pocketRecognizer.stop();
+
+        if(str.equals(KWS_SEARCH))
+            pocketRecognizer.startListening(str);
+        else
+            pocketRecognizer.startListening(str, 10000);
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if(pocketRecognizer != null){
+            pocketRecognizer.cancel();
+            pocketRecognizer.shutdown();
+        }
     }
 
     private Intent createRecognizerIntent(){
@@ -67,6 +183,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
+    class PocketRecognizerListener implements edu.cmu.pocketsphinx.RecognitionListener{
+        @Override
+        public void onBeginningOfSpeech() {
+
+        }
+
+        @Override
+        public void onEndOfSpeech() {
+        //if(!pocketRecognizer.getSearchName().equals(KWS_SEARCH))
+            //switchSearch(KWS_SEARCH);
+        }
+
+        @Override
+        public void onPartialResult(Hypothesis hypothesis) {
+            if (hypothesis == null)
+                return;
+            Log.wtf(TAG,"Partial: " + hypothesis.getHypstr());
+            String text = hypothesis.getHypstr();
+//            if (text.equals(KEYPHRASE))
+//                switchSearch(MENU_SEARCH);
+//            else {
+//                Log.wtf(TAG,hypothesis.getHypstr());
+//            }
+        }
+
+        @Override
+        public void onResult(Hypothesis hypothesis) {
+            if(hypothesis != null)
+                Log.wtf(TAG,"End result: " + hypothesis.getHypstr());
+        }
+
+        @Override
+        public void onError(Exception e) {
+            Log.wtf(TAG,e);
+        }
+
+        @Override
+        public void onTimeout() {
+            switchSearch(KWS_SEARCH);
+        }
+    }
 
 
     class RecognizerListener implements RecognitionListener{
