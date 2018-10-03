@@ -16,6 +16,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.w3c.dom.Text;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -100,18 +103,20 @@ public class MainActivity extends AppCompatActivity {
 
         runRecognizerSetup();
 
-        String init = TextToGrammer.convertTextToJSGF(demoText);
+        String init = TextToGrammer.convertTextToJSGF(text);
         partialResults.setText(init);
 
-        fullResults.setText(demoText);
+        fullResults.setText(text);
     }
 
     private void runRecognizerSetup(){
         new AsyncTask<Void,Void,Exception>(){
             @Override
             protected void onPostExecute(Exception e) {
-               if(e != null)
-                    Snackbar.make(MainActivity.this.findViewById(R.id.container),"Exception with Voice", Snackbar.LENGTH_SHORT).show();
+               if(e != null) {
+                   Log.wtf(TAG,e);
+                   Snackbar.make(MainActivity.this.findViewById(R.id.container), "Exception with Voice", Snackbar.LENGTH_SHORT).show();
+               }
             }
 
             @Override
@@ -149,7 +154,9 @@ public class MainActivity extends AppCompatActivity {
         //File menuGrammar = new File(dir,"mymenu.gram");
 
         String menuGrammar = TextToGrammer.convertTextToJSGF(text);
-        pocketRecognizer.addGrammarSearch(MENU_SEARCH,menuGrammar);
+        File file = TextToGrammer.saveJSFGToFile("test",menuGrammar,dir);
+
+        pocketRecognizer.addGrammarSearch(MENU_SEARCH,file);
 
         Snackbar.make(findViewById(R.id.container),"Setup complete",Snackbar.LENGTH_SHORT).show();
 
@@ -186,7 +193,13 @@ public class MainActivity extends AppCompatActivity {
         return intent;
     }
 
-
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if(pocketRecognizer != null)
+            pocketRecognizer.stop();
+        isPocketOnGoing = false;
+    }
 
     class PocketRecognizerListener implements edu.cmu.pocketsphinx.RecognitionListener{
         @Override
@@ -206,7 +219,9 @@ public class MainActivity extends AppCompatActivity {
             if (hypothesis == null)
                 return;
             Log.wtf(TAG,"Partial: " + hypothesis.getHypstr());
+
             String text = hypothesis.getHypstr();
+            fullResults.setText(text);
 //            if (text.equals(KEYPHRASE))
 //                switchSearch(MENU_SEARCH);
 //            else {
@@ -302,10 +317,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private static final String text = "Раз, Два, три, ТРИ, ЧетырЕ, пЯть, шесть , семь,восемь. девять!десять?";
+    private static final String text = "Когда я был молод, игры только появились и вся наша компания только и жила ими!";
 
 
     private static final String demoText = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно.\\n\\nЯ очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. В этом случае скорость прокрутки текста автоматически подстроится под мою речь. А если я начну импровизировать," +
-            " текст остановится и будет ждать пока я вернусь к чтению.\\n\\nА еще, я теперь знаю, что инженеры PIXAERO разработали мобильный телесуфлер, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных телесуфлеров в мире! Больше информации о суфлере PIXAERO MOBUS я всегда могу найти на сайте pixaero.pro.\\n\\n" +
-            "Если у меня возникнут идеи как сделать приложение или суфлер еще более удобным, я напишу ребятам из PIXAERO и они постараются воплотить это в жизнь!";
+            " текст остановится и будет ждать пока я вернусь к чтению.\\n\\nА еще, я теперь знаю, что инженеры PIXAERO разработали мобильный телесуфлёр, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных телесуфлёров в мире! Больше информации о суфлёре PIXAERO MOBUS я всегда могу найти на сайте pixaero.pro.\\n\\n" +
+            "Если у меня возникнут идеи как сделать приложение или суфлёр еще более удобным, я напишу ребятам из PIXAERO и они постараются воплотить это в жизнь!";
 }
