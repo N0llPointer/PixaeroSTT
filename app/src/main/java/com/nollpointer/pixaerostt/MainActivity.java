@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
 
         int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
         if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO}, 1);
             return;
         }
 
@@ -100,18 +100,18 @@ public class MainActivity extends AppCompatActivity {
 
         runRecognizerSetup();
 
+        String init = TextToGrammer.convertTextToJSGF(demoText);
+        partialResults.setText(init);
+
+        fullResults.setText(demoText);
     }
 
     private void runRecognizerSetup(){
         new AsyncTask<Void,Void,Exception>(){
             @Override
             protected void onPostExecute(Exception e) {
-               // if(e == null)
-                    //switchSearch(KWS_SEARCH);
-               // else
-                //    Log.wtf(TAG,e);
-
-                //pocketRecognizer.startListening(MENU_SEARCH);
+               if(e != null)
+                    Snackbar.make(MainActivity.this.findViewById(R.id.container),"Exception with Voice", Snackbar.LENGTH_SHORT).show();
             }
 
             @Override
@@ -144,7 +144,11 @@ public class MainActivity extends AppCompatActivity {
 
         //pocketRecognizer.addKeyphraseSearch(KWS_SEARCH,KEYPHRASE);
 
-        File menuGrammar = new File(dir,"mymenu.gram");
+
+
+        //File menuGrammar = new File(dir,"mymenu.gram");
+
+        String menuGrammar = TextToGrammer.convertTextToJSGF(text);
         pocketRecognizer.addGrammarSearch(MENU_SEARCH,menuGrammar);
 
         Snackbar.make(findViewById(R.id.container),"Setup complete",Snackbar.LENGTH_SHORT).show();
@@ -187,11 +191,12 @@ public class MainActivity extends AppCompatActivity {
     class PocketRecognizerListener implements edu.cmu.pocketsphinx.RecognitionListener{
         @Override
         public void onBeginningOfSpeech() {
-
+            Log.wtf(TAG,"Start of the Speech");
         }
 
         @Override
         public void onEndOfSpeech() {
+            Log.wtf(TAG,"End of the Speech");
         //if(!pocketRecognizer.getSearchName().equals(KWS_SEARCH))
             //switchSearch(KWS_SEARCH);
         }
@@ -295,4 +300,12 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
+
+
+    private static final String text = "Раз, Два, три, ТРИ, ЧетырЕ, пЯть, шесть , семь,восемь. девять!десять?";
+
+
+    private static final String demoText = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно.\\n\\nЯ очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. В этом случае скорость прокрутки текста автоматически подстроится под мою речь. А если я начну импровизировать," +
+            " текст остановится и будет ждать пока я вернусь к чтению.\\n\\nА еще, я теперь знаю, что инженеры PIXAERO разработали мобильный телесуфлер, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных телесуфлеров в мире! Больше информации о суфлере PIXAERO MOBUS я всегда могу найти на сайте pixaero.pro.\\n\\n" +
+            "Если у меня возникнут идеи как сделать приложение или суфлер еще более удобным, я напишу ребятам из PIXAERO и они постараются воплотить это в жизнь!";
 }
