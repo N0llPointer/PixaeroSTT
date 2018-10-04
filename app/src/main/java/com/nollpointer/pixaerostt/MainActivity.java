@@ -3,6 +3,7 @@ package com.nollpointer.pixaerostt;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -30,16 +31,12 @@ import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button voiceRecognizerButton;
     private Button voicePocketRecognizer;
 
     private TextView partialResults;
     private TextView fullResults;
 
-    private SpeechRecognizer recognizer;
-
     private boolean isRecording = false;
-    private Intent recognizerIntent;
 
     public static String TAG = "STT";
 
@@ -53,21 +50,18 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isPocketOnGoing = false;
 
+    private MediaPlayer voiceRecognitionSoundEffect;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        voiceRecognizerButton = findViewById(R.id.button_voice_recognizer_android);
         voicePocketRecognizer = findViewById(R.id.button_voice_recognizer_sphynx);
         partialResults = findViewById(R.id.text_view_partial);
         fullResults = findViewById(R.id.text_view_full);
 
-        recognizer = SpeechRecognizer.createSpeechRecognizer(this);
-        recognizer.setRecognitionListener(new RecognizerListener());
-
-        recognizerIntent = createRecognizerIntent();
 
         int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
         if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
@@ -75,33 +69,26 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        voiceRecognizerButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(isRecording){
-                    isRecording = false;
-                    recognizer.stopListening();
-                }else{
-                    isRecording = true;
-                    recognizer.startListening(recognizerIntent);
-                }
-            }
-        });
-
         voicePocketRecognizer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(isPocketOnGoing)
+                if(isPocketOnGoing) {
                     pocketRecognizer.stop();
-                else
+                }else {
+//                    voiceRecognitionSoundEffect.reset();
+//                    voiceRecognitionSoundEffect.start();
                     pocketRecognizer.startListening(MENU_SEARCH);
-
-
+                }
+                voiceRecognitionSoundEffect.start();
+                //voiceRecognitionSoundEffect.reset();
+                //voiceRecognitionSoundEffect.
                 isPocketOnGoing = !isPocketOnGoing;
             }
         });
 
         runRecognizerSetup();
+
+        voiceRecognitionSoundEffect = MediaPlayer.create(this,R.raw.stairs);
 
         String init = TextToGrammer.convertTextToJSGF(text);
         partialResults.setText(init);
@@ -183,15 +170,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private Intent createRecognizerIntent(){
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,"ru-RU");
-        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,3000);
-        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS,3000);
-
-
-        return intent;
-    }
 
     @Override
     protected void onStop() {
@@ -243,76 +221,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onTimeout() {
             switchSearch(KWS_SEARCH);
-        }
-    }
-
-
-    class RecognizerListener implements RecognitionListener{
-        @Override
-        public void onReadyForSpeech(Bundle bundle) {
-            Log.wtf(TAG,"Start of Speech");
-        }
-
-        @Override
-        public void onBeginningOfSpeech() {
-
-        }
-
-        @Override
-        public void onRmsChanged(float v) {
-
-        }
-
-        @Override
-        public void onBufferReceived(byte[] bytes) {
-
-        }
-
-        @Override
-        public void onEndOfSpeech() {
-            Log.wtf(TAG,"End of Speech");
-
-        }
-
-        @Override
-        public void onError(int i) {
-
-        }
-
-        @Override
-        public void onResults(Bundle bundle) {
-            ArrayList<String> strings = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-
-            if(strings.size() > 0) {
-
-                String words = "";
-                for (String s : strings)
-                    words += s + "\n";
-
-                fullResults.setText(words);
-            }else
-                fullResults.setText("Nothing was Recognized");
-        }
-
-        @Override
-        public void onPartialResults(Bundle bundle) {
-            ArrayList<String> strings = bundle.getStringArrayList(RecognizerIntent.EXTRA_PARTIAL_RESULTS);
-
-            if(strings.size() > 0) {
-
-                String words = "";
-                for (String s : strings)
-                    words += s + "\n";
-
-                partialResults.setText(words);
-
-            }else
-                partialResults.setText("Nothing was Recognized");
-        }
-
-        @Override
-        public void onEvent(int i, Bundle bundle) {
-
         }
     }
 
