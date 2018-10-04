@@ -19,6 +19,9 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.answers.Answers;
+
 import org.w3c.dom.Text;
 
 import java.io.File;
@@ -28,13 +31,14 @@ import java.util.Locale;
 import edu.cmu.pocketsphinx.Assets;
 import edu.cmu.pocketsphinx.Hypothesis;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
+import io.fabric.sdk.android.Fabric;
 
 public class MainActivity extends AppCompatActivity {
 
     private Button voicePocketRecognizer;
 
-    private TextView partialResults;
-    private TextView fullResults;
+//    private TextView partialResults;
+//    private TextView fullResults;
 
     private boolean isRecording = false;
 
@@ -58,9 +62,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Fabric.with(this, new Crashlytics());
+
+
+
         voicePocketRecognizer = findViewById(R.id.button_voice_recognizer_sphynx);
-        partialResults = findViewById(R.id.text_view_partial);
-        fullResults = findViewById(R.id.text_view_full);
+//        partialResults = findViewById(R.id.text_view_partial);
+//        fullResults = findViewById(R.id.text_view_full);
 
 
         int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -83,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
                 //voiceRecognitionSoundEffect.reset();
                 //voiceRecognitionSoundEffect.
                 isPocketOnGoing = !isPocketOnGoing;
+
+                throw new RuntimeException("LOOOOL");
             }
         });
 
@@ -90,10 +100,10 @@ public class MainActivity extends AppCompatActivity {
 
         voiceRecognitionSoundEffect = MediaPlayer.create(this,R.raw.stairs);
 
-        String init = TextToGrammer.convertTextToJSGF(text);
-        partialResults.setText(init);
+        //String init = TextToGrammer.convertTextToJSGF(text);
+        //partialResults.setText(init);
 
-        fullResults.setText(text);
+        //fullResults.setText(text);
     }
 
     private void runRecognizerSetup(){
@@ -199,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
             Log.wtf(TAG,"Partial: " + hypothesis.getHypstr());
 
             String text = hypothesis.getHypstr();
-            fullResults.setText(text);
+            //fullResults.setText(text);
 //            if (text.equals(KEYPHRASE))
 //                switchSearch(MENU_SEARCH);
 //            else {
