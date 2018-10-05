@@ -8,14 +8,19 @@ import android.os.AsyncTask;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,12 +40,11 @@ import io.fabric.sdk.android.Fabric;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button voicePocketRecognizer;
+    private Button recognizerButton;
 
-//    private TextView partialResults;
-//    private TextView fullResults;
 
-    private boolean isRecording = false;
+    private ScrollView scrollView;
+    private TextView contentText;
 
     public static String TAG = "STT";
 
@@ -50,11 +54,14 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String KEYPHRASE = "well hello";
 
-    private edu.cmu.pocketsphinx.SpeechRecognizer pocketRecognizer;
+    private edu.cmu.pocketsphinx.SpeechRecognizer recognizer;
 
     private boolean isPocketOnGoing = false;
 
     private MediaPlayer voiceRecognitionSoundEffect;
+
+
+    private int textSize = 40;
 
 
     @Override
@@ -66,10 +73,14 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        voicePocketRecognizer = findViewById(R.id.button_voice_recognizer_sphynx);
+        recognizerButton = findViewById(R.id.button_voice_recognizer_sphynx);
 //        partialResults = findViewById(R.id.text_view_partial);
 //        fullResults = findViewById(R.id.text_view_full);
 
+        contentText = findViewById(R.id.contentText);
+        scrollView = findViewById(R.id.scrollView);
+
+        contentText.setText(text);
 
         int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
         if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
@@ -77,15 +88,15 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        voicePocketRecognizer.setOnClickListener(new View.OnClickListener() {
+        recognizerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(isPocketOnGoing) {
-                    pocketRecognizer.stop();
+                    recognizer.stop();
                 }else {
 //                    voiceRecognitionSoundEffect.reset();
 //                    voiceRecognitionSoundEffect.start();
-                    pocketRecognizer.startListening(MENU_SEARCH);
+                    recognizer.startListening(MENU_SEARCH);
                 }
                 voiceRecognitionSoundEffect.start();
                 //voiceRecognitionSoundEffect.reset();
@@ -104,6 +115,39 @@ public class MainActivity extends AppCompatActivity {
         //partialResults.setText(init);
 
         //fullResults.setText(text);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu,menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.font_up:
+                textSize += 2;
+                break;
+            case R.id.font_down:
+                textSize -=2;
+                break;
+        }
+        if(textSize > 0)
+            contentText.setTextSize(textSize);
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if(requestCode == 1){
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                runRecognizerSetup();
+            else
+                finish();
+        }
     }
 
     private void runRecognizerSetup(){
@@ -133,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupRecognizer(File dir) {
         try {
-            pocketRecognizer = SpeechRecognizerSetup.defaultSetup()
+            recognizer = SpeechRecognizerSetup.defaultSetup()
                     .setAcousticModel(new File(dir, "ru-ptm"))
                     .setDictionary(new File(dir, "ru.dic"))
                     .setKeywordThreshold(1e-22f)
@@ -142,9 +186,9 @@ public class MainActivity extends AppCompatActivity {
             Log.wtf(TAG,e);
         }
 
-        pocketRecognizer.addListener(new PocketRecognizerListener());
+        recognizer.addListener(new recognizerListener());
 
-        //pocketRecognizer.addKeyphraseSearch(KWS_SEARCH,KEYPHRASE);
+        //recognizer.addKeyphraseSearch(KWS_SEARCH,KEYPHRASE);
 
 
 
@@ -153,20 +197,20 @@ public class MainActivity extends AppCompatActivity {
         String menuGrammar = TextToGrammer.convertTextToJSGF(text);
         File file = TextToGrammer.saveJSFGToFile("test",menuGrammar,dir);
 
-        pocketRecognizer.addGrammarSearch(MENU_SEARCH,file);
+        recognizer.addGrammarSearch(MENU_SEARCH,file);
 
         Snackbar.make(findViewById(R.id.container),"Setup complete",Snackbar.LENGTH_SHORT).show();
 
-        //pocketRecognizer.startListening()
+        //recognizer.startListening()
     }
 
     private void switchSearch(String str){
-        pocketRecognizer.stop();
+        recognizer.stop();
 
         if(str.equals(KWS_SEARCH))
-            pocketRecognizer.startListening(str);
+            recognizer.startListening(str);
         else
-            pocketRecognizer.startListening(str, 10000);
+            recognizer.startListening(str, 10000);
     }
 
 
@@ -174,9 +218,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        if(pocketRecognizer != null){
-            pocketRecognizer.cancel();
-            pocketRecognizer.shutdown();
+        if(recognizer != null){
+            recognizer.cancel();
+            recognizer.shutdown();
         }
     }
 
@@ -184,12 +228,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        if(pocketRecognizer != null)
-            pocketRecognizer.stop();
+        if(recognizer != null)
+            recognizer.stop();
         isPocketOnGoing = false;
     }
 
-    class PocketRecognizerListener implements edu.cmu.pocketsphinx.RecognitionListener{
+    class recognizerListener implements edu.cmu.pocketsphinx.RecognitionListener{
         @Override
         public void onBeginningOfSpeech() {
             Log.wtf(TAG,"Start of the Speech");
@@ -198,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onEndOfSpeech() {
             Log.wtf(TAG,"End of the Speech");
-        //if(!pocketRecognizer.getSearchName().equals(KWS_SEARCH))
+        //if(!recognizer.getSearchName().equals(KWS_SEARCH))
             //switchSearch(KWS_SEARCH);
         }
 
