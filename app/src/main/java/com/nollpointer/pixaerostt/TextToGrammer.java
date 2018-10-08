@@ -14,7 +14,8 @@ public class TextToGrammer {
         builder.append("public <command> = <commands>+;\n");
         builder.append("<commands> =");
 
-        String[] words = text.split("[,.?;:!\\-\\s]+");
+        //String[] words = text.split("[,.?;:!\\-\\s]+");
+        String[] words = text.split("[\\p{Punct}\\s]+");
 
         builder.append(" " + words[0].toLowerCase() + " |");
 

@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
                 //voiceRecognitionSoundEffect.
                 isPocketOnGoing = !isPocketOnGoing;
 
-                throw new RuntimeException("LOOOOL");
+                //throw new RuntimeException("LOOOOL");
             }
         });
 
@@ -111,9 +111,9 @@ public class MainActivity extends AppCompatActivity {
 
         voiceRecognitionSoundEffect = MediaPlayer.create(this,R.raw.stairs);
 
-        //String init = TextToGrammer.convertTextToJSGF(text);
+        String init = TextToGrammer.convertTextToJSGF(demoText);
         //partialResults.setText(init);
-
+        contentText.setText(init);
         //fullResults.setText(text);
     }
 
