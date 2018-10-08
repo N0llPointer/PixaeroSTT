@@ -35,6 +35,7 @@ import org.w3c.dom.Text;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -72,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<String> currentUniqueRecognizedWords = new ArrayList<>();
 
+    private ArrayList<String> currentReadableUniqueWords = new ArrayList<>();
+
 
     private int textSize = 40;
 
@@ -82,8 +85,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Fabric.with(this, new Crashlytics());
-
-
 
         recognizerButton = findViewById(R.id.button_voice_recognizer_sphynx);
 
@@ -117,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
                     toolbar.setTitle(R.string.listening);
                     countDownView.setVisibility(View.VISIBLE);
                     countDownView.startCountDown(3);
+
                 }
                 voiceRecognitionSoundEffect.start();
                 isPocketOnGoing = !isPocketOnGoing;
@@ -127,6 +129,8 @@ public class MainActivity extends AppCompatActivity {
                     controller = new ScrollViewController(scrollView,contentText,MainActivity.this);
 
                     Log.wtf(TAG,controller.getCurrentShowingSubString());
+
+                    currentReadableUniqueWords.addAll(TextToGrammer.getUniqueWordsList(controller.getCurrentShowingReadngSubString()));
                 }
             }
         });
@@ -158,17 +162,8 @@ public class MainActivity extends AppCompatActivity {
 
         voiceRecognitionSoundEffect = MediaPlayer.create(this,R.raw.stairs);
 
-        //String init = TextToGrammer.convertTextToJSGF(demoText);
-        //partialResults.setText(init);
         contentText.setText(demoText);
-        //fullResults.setText(text);
 
-
-
-    }
-
-    public List<String> getCurrentUniqueRecognizedWords(){
-        return currentUniqueRecognizedWords;
     }
 
     @Override
@@ -202,19 +197,12 @@ public class MainActivity extends AppCompatActivity {
 
         //recognizer.addKeyphraseSearch(KWS_SEARCH,KEYPHRASE);
 
-
-
         //File menuGrammar = new File(dir,"mymenu.gram");
 
         String menuGrammar = TextToGrammer.convertTextToJSGF(text);
         File file = TextToGrammer.saveJSFGToFile("test",menuGrammar,dir);
 
         recognizer.addGrammarSearch(MENU_SEARCH,file);
-
-        //Snackbar.make(findViewById(R.id.container),"Setup complete",Snackbar.LENGTH_SHORT).show();
-
-
-        //recognizer.startListening()
     }
 
     private void switchSearch(String str){
@@ -247,6 +235,26 @@ public class MainActivity extends AppCompatActivity {
         toolbar.setTitle(R.string.app_name);
     }
 
+    public void testRecognizedWords(){
+
+        int size = currentReadableUniqueWords.size();
+        int recognized = 0;
+        for(String s:currentUniqueRecognizedWords){
+            if(currentReadableUniqueWords.contains(s))
+                recognized++;
+        }
+        double percent = recognized;
+        percent /= size;
+        if(percent > 0.5){
+            controller.swipeUp();
+            currentReadableUniqueWords.clear();
+            currentReadableUniqueWords.addAll(TextToGrammer.getUniqueWordsList(controller.getCurrentShowingReadngSubString()));
+        }
+
+        Log.wtf(TAG,Double.toString(Math.ceil(percent * 100)));
+
+    }
+
     class recognizerListener implements edu.cmu.pocketsphinx.RecognitionListener{
         @Override
         public void onBeginningOfSpeech() {
@@ -264,6 +272,13 @@ public class MainActivity extends AppCompatActivity {
                 return;
             String text = hypothesis.getHypstr();
             Log.wtf(TAG,"Partial: " + text);
+            List<String> list = TextToGrammer.getUniqueWordsList(text);
+            for(String s:list){
+                if(!currentUniqueRecognizedWords.contains(s))
+                    currentUniqueRecognizedWords.add(s);
+            }
+            //currentUniqueRecognizedWords.addAll(list);
+            testRecognizedWords();
 
         }
 

@@ -91,4 +91,5 @@ public class ScrollViewController {
         currentShowingUniqueWords.addAll(TextToGrammer.getUniqueWordsList(getCurrentShowingReadngSubString()));
     }
 
+
 }
