@@ -1,6 +1,7 @@
 package com.nollpointer.pixaerostt;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
@@ -14,18 +15,21 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
+import com.nollpointer.pixaerostt.views.CountDownView;
 
 import org.w3c.dom.Text;
 
@@ -45,6 +49,9 @@ public class MainActivity extends AppCompatActivity {
 
     private ScrollView scrollView;
     private TextView contentText;
+    private CountDownView countDownView;
+    private FrameLayout container;
+    private Toolbar toolbar;
 
     public static String TAG = "STT";
 
@@ -74,12 +81,18 @@ public class MainActivity extends AppCompatActivity {
 
 
         recognizerButton = findViewById(R.id.button_voice_recognizer_sphynx);
-//        partialResults = findViewById(R.id.text_view_partial);
-//        fullResults = findViewById(R.id.text_view_full);
 
         contentText = findViewById(R.id.contentText);
         scrollView = findViewById(R.id.scrollView);
+        container = findViewById(R.id.container);
+        toolbar = findViewById(R.id.toolbar);
 
+
+        countDownView = new CountDownView(this);
+        container.addView(countDownView);
+
+
+        toolbar.inflateMenu(R.menu.main_menu);
         contentText.setText(text);
 
         int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -93,49 +106,50 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(isPocketOnGoing) {
                     recognizer.stop();
+                    toolbar.setTitle(R.string.app_name);
                 }else {
-//                    voiceRecognitionSoundEffect.reset();
-//                    voiceRecognitionSoundEffect.start();
                     recognizer.startListening(MENU_SEARCH);
+                    toolbar.setTitle(R.string.listening);
                 }
                 voiceRecognitionSoundEffect.start();
-                //voiceRecognitionSoundEffect.reset();
-                //voiceRecognitionSoundEffect.
                 isPocketOnGoing = !isPocketOnGoing;
 
-                //throw new RuntimeException("LOOOOL");
+                countDownView.setVisibility(View.VISIBLE);
+                countDownView.startCountDown(5);
             }
         });
+
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()){
+                    case R.id.font_up:
+                        textSize += 2;
+                        break;
+                    case R.id.font_down:
+                        textSize -=2;
+                        break;
+                    case R.id.font_refresh:
+                        textSize = 40;
+                        break;
+                }
+                if(textSize > 0)
+                    contentText.setTextSize(textSize);
+                else
+                    contentText.setTextSize(1);
+                return true;
+            }
+        });
+
 
         runRecognizerSetup();
 
         voiceRecognitionSoundEffect = MediaPlayer.create(this,R.raw.stairs);
 
-        String init = TextToGrammer.convertTextToJSGF(demoText);
+        //String init = TextToGrammer.convertTextToJSGF(demoText);
         //partialResults.setText(init);
-        contentText.setText(init);
+        contentText.setText(demoText);
         //fullResults.setText(text);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu,menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
-            case R.id.font_up:
-                textSize += 2;
-                break;
-            case R.id.font_down:
-                textSize -=2;
-                break;
-        }
-        if(textSize > 0)
-            contentText.setTextSize(textSize);
-        return true;
     }
 
     @Override
@@ -151,28 +165,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void runRecognizerSetup(){
-        new AsyncTask<Void,Void,Exception>(){
-            @Override
-            protected void onPostExecute(Exception e) {
-               if(e != null) {
-                   Log.wtf(TAG,e);
-                   Snackbar.make(MainActivity.this.findViewById(R.id.container), "Exception with Voice", Snackbar.LENGTH_SHORT).show();
-               }
-            }
-
-            @Override
-            protected Exception doInBackground(Void... voids) {
-                try{
-                    Assets assets = new Assets(MainActivity.this);
-                    File assetsDir = assets.syncAssets();
-                    setupRecognizer(assetsDir);
-                }catch (Exception e){
-                    return e;
-                }
-
-                return null;
-            }
-        }.execute();
+        new RecognizerSetup(this).execute();
     }
 
     private void setupRecognizer(File dir) {
@@ -231,6 +224,7 @@ public class MainActivity extends AppCompatActivity {
         if(recognizer != null)
             recognizer.stop();
         isPocketOnGoing = false;
+        toolbar.setTitle(R.string.app_name);
     }
 
     class recognizerListener implements edu.cmu.pocketsphinx.RecognitionListener{
@@ -242,23 +236,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onEndOfSpeech() {
             Log.wtf(TAG,"End of the Speech");
-        //if(!recognizer.getSearchName().equals(KWS_SEARCH))
-            //switchSearch(KWS_SEARCH);
         }
 
         @Override
         public void onPartialResult(Hypothesis hypothesis) {
             if (hypothesis == null)
                 return;
-            Log.wtf(TAG,"Partial: " + hypothesis.getHypstr());
-
             String text = hypothesis.getHypstr();
-            //fullResults.setText(text);
-//            if (text.equals(KEYPHRASE))
-//                switchSearch(MENU_SEARCH);
-//            else {
-//                Log.wtf(TAG,hypothesis.getHypstr());
-//            }
+            Log.wtf(TAG,"Partial: " + text);
+
         }
 
         @Override
@@ -278,6 +264,36 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    class RecognizerSetup extends AsyncTask<Void,Void,Exception>{
+
+        AppCompatActivity context;
+
+        RecognizerSetup(AppCompatActivity context) {
+            this.context = context;
+        }
+
+        @Override
+        protected void onPostExecute(Exception e) {
+            if(e != null) {
+                Log.wtf(TAG,e);
+                Snackbar.make(context.findViewById(R.id.container), "Exception with Voice", Snackbar.LENGTH_SHORT).show();
+            }else
+                toolbar.setTitle(R.string.app_name);
+        }
+
+        @Override
+        protected Exception doInBackground(Void... voids) {
+            try{
+                Assets assets = new Assets(context);
+                File assetsDir = assets.syncAssets();
+                setupRecognizer(assetsDir);
+            }catch (Exception e){
+                return e;
+            }
+
+            return null;
+        }
+    }
 
     private static final String text = "Когда я был молод, игры только появились и вся наша компания только и жила ими!";
 
@@ -285,4 +301,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String demoText = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно.\\n\\nЯ очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. В этом случае скорость прокрутки текста автоматически подстроится под мою речь. А если я начну импровизировать," +
             " текст остановится и будет ждать пока я вернусь к чтению.\\n\\nА еще, я теперь знаю, что инженеры PIXAERO разработали мобильный телесуфлёр, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных телесуфлёров в мире! Больше информации о суфлёре PIXAERO MOBUS я всегда могу найти на сайте pixaero.pro.\\n\\n" +
             "Если у меня возникнут идеи как сделать приложение или суфлёр еще более удобным, я напишу ребятам из PIXAERO и они постараются воплотить это в жизнь!";
+
+
+
 }

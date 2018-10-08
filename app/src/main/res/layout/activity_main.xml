@@ -1,90 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:layout_gravity="center"
     android:id="@+id/container">
 
+    <LinearLayout android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_gravity="center">
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:id="@+id/scrollView">
-
-        <LinearLayout
+        <android.support.v7.widget.Toolbar
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="?android:actionBarSize"
+            android:id="@+id/toolbar"
+            android:background="@color/colorPrimary"
+            app:title="@string/initialize"
+            app:titleTextColor="@android:color/white"/>
 
-            <TextView
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:id="@+id/scrollView">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/contentText"
-                android:textAppearance="?android:textAppearanceLarge"
-                android:textSize="40sp"
-                android:text="@string/test_text"/>
+                android:orientation="vertical">
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/contentText"
+                    android:textAppearance="?android:textAppearanceLarge"
+                    android:textSize="40sp"
+                    android:text="@string/test_text"/>
+
+
+            </LinearLayout>
+
+
+
+        </ScrollView>
+
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray" />
+
+        <LinearLayout
+            android:padding="3dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                style="?android:attr/buttonBarStyle"
+                android:background="@android:color/holo_green_dark"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sphynx Recognizer"
+                android:id="@+id/button_voice_recognizer_sphynx"
+                android:layout_gravity="center_horizontal"/>
 
         </LinearLayout>
-
-
-
-    </ScrollView>
-
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@android:color/darker_gray" />
-
-    <LinearLayout
-        android:padding="3dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:gravity="center"
-        android:orientation="horizontal">
-
-        <Button
-            style="?android:attr/buttonBarStyle"
-            android:background="@android:color/holo_green_dark"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Sphynx Recognizer"
-            android:id="@+id/button_voice_recognizer_sphynx"
-            android:layout_gravity="center_horizontal"/>
 
     </LinearLayout>
 
 
-
-    <!--<View-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="1dp"-->
-        <!--android:background="@android:color/darker_gray"/>-->
-
-    <!--<TextView-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="0dp"-->
-        <!--android:layout_weight="1"-->
-        <!--android:text="Partial Results"-->
-        <!--android:id="@+id/text_view_partial"/>-->
-
-    <!--<View-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="1dp"-->
-        <!--android:background="@android:color/darker_gray"/>-->
-
-    <!--<TextView-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="0dp"-->
-        <!--android:layout_weight="1"-->
-        <!--android:text="Full Results"-->
-        <!--android:id="@+id/text_view_full"/>-->
-
-</LinearLayout>
+</FrameLayout>
