@@ -62,6 +62,7 @@
             android:orientation="horizontal">
 
             <Button
+                android:enabled="false"
                 style="?android:attr/buttonBarStyle"
                 android:background="@android:color/holo_green_dark"
                 android:paddingStart="10dp"

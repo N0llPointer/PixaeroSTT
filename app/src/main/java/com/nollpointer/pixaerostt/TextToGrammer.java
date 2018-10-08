@@ -5,8 +5,14 @@ import android.util.Log;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class TextToGrammer {
+
+    private static final String REGEX = "[\\p{Punct}\\s]+";
 
     public static String convertTextToJSGF(String text){
         StringBuilder builder = new StringBuilder();
@@ -15,7 +21,7 @@ public class TextToGrammer {
         builder.append("<commands> =");
 
         //String[] words = text.split("[,.?;:!\\-\\s]+");
-        String[] words = text.split("[\\p{Punct}\\s]+");
+        String[] words = text.split(REGEX);
 
         builder.append(" " + words[0].toLowerCase() + " |");
 
@@ -38,6 +44,14 @@ public class TextToGrammer {
 
         return builder.toString();
     }
+
+    public static List<String> getUniqueWordsList(String text){
+
+        String[] array = text.split(REGEX);
+        return Arrays.asList(array);
+    }
+
+
 
     public static File saveJSFGToFile(String id,String text, File directory){
         File file = new File(directory,id + ".gram");

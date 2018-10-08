@@ -35,6 +35,7 @@ import org.w3c.dom.Text;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import edu.cmu.pocketsphinx.Assets;
@@ -53,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
     private FrameLayout container;
     private Toolbar toolbar;
 
+    private ScrollViewController controller;
+
     public static String TAG = "STT";
 
 
@@ -66,6 +69,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean isPocketOnGoing = false;
 
     private MediaPlayer voiceRecognitionSoundEffect;
+
+    private ArrayList<String> currentUniqueRecognizedWords = new ArrayList<>();
 
 
     private int textSize = 40;
@@ -110,12 +115,19 @@ public class MainActivity extends AppCompatActivity {
                 }else {
                     recognizer.startListening(MENU_SEARCH);
                     toolbar.setTitle(R.string.listening);
+                    countDownView.setVisibility(View.VISIBLE);
+                    countDownView.startCountDown(3);
                 }
                 voiceRecognitionSoundEffect.start();
                 isPocketOnGoing = !isPocketOnGoing;
 
-                countDownView.setVisibility(View.VISIBLE);
-                countDownView.startCountDown(5);
+
+
+                if(controller == null){
+                    controller = new ScrollViewController(scrollView,contentText,MainActivity.this);
+
+                    Log.wtf(TAG,controller.getCurrentShowingSubString());
+                }
             }
         });
 
@@ -150,6 +162,13 @@ public class MainActivity extends AppCompatActivity {
         //partialResults.setText(init);
         contentText.setText(demoText);
         //fullResults.setText(text);
+
+
+
+    }
+
+    public List<String> getCurrentUniqueRecognizedWords(){
+        return currentUniqueRecognizedWords;
     }
 
     @Override
@@ -192,7 +211,8 @@ public class MainActivity extends AppCompatActivity {
 
         recognizer.addGrammarSearch(MENU_SEARCH,file);
 
-        Snackbar.make(findViewById(R.id.container),"Setup complete",Snackbar.LENGTH_SHORT).show();
+        //Snackbar.make(findViewById(R.id.container),"Setup complete",Snackbar.LENGTH_SHORT).show();
+
 
         //recognizer.startListening()
     }
@@ -277,8 +297,10 @@ public class MainActivity extends AppCompatActivity {
             if(e != null) {
                 Log.wtf(TAG,e);
                 Snackbar.make(context.findViewById(R.id.container), "Exception with Voice", Snackbar.LENGTH_SHORT).show();
-            }else
+            }else {
                 toolbar.setTitle(R.string.app_name);
+                recognizerButton.setEnabled(true);
+            }
         }
 
         @Override
