@@ -2,6 +2,7 @@ package com.nollpointer.pixaerostt;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
@@ -13,6 +14,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -21,8 +23,10 @@ import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.PopupMenu;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -148,6 +152,9 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.font_refresh:
                         textSize = 40;
                         break;
+                    case R.id.more_info:
+                        showMoreInfo();
+                        break;
                 }
                 if(textSize > 0)
                     contentText.setTextSize(textSize);
@@ -187,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
             recognizer = SpeechRecognizerSetup.defaultSetup()
                     .setAcousticModel(new File(dir, "ru-ptm"))
                     .setDictionary(new File(dir, "ru.dic"))
-                    .setKeywordThreshold(1e-22f)
+                    .setKeywordThreshold(1e-7f)
                     .getRecognizer();
         }catch (Exception e){
             Log.wtf(TAG,e);
@@ -199,10 +206,10 @@ public class MainActivity extends AppCompatActivity {
 
         //File menuGrammar = new File(dir,"mymenu.gram");
 
-        String menuGrammar = TextToGrammer.convertTextToJSGF(text);
+        String menuGrammar = TextToGrammer.convertTextToJSGF(demoText);
         File file = TextToGrammer.saveJSFGToFile("test",menuGrammar,dir);
 
-        recognizer.addGrammarSearch(MENU_SEARCH,file);
+        recognizer.addGrammarSearch(MENU_SEARCH,menuGrammar);
     }
 
     private void switchSearch(String str){
@@ -214,7 +221,6 @@ public class MainActivity extends AppCompatActivity {
             recognizer.startListening(str, 10000);
     }
 
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -225,7 +231,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     @Override
     protected void onStop() {
         super.onStop();
@@ -233,6 +238,60 @@ public class MainActivity extends AppCompatActivity {
             recognizer.stop();
         isPocketOnGoing = false;
         toolbar.setTitle(R.string.app_name);
+    }
+
+    private void showMoreInfo(){
+
+        PopupMenu menu = new PopupMenu(this,findViewById(R.id.more_info));
+        menu.inflate(R.menu.popup_menu);
+        menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch(item.getItemId()){
+                    case R.id.recognized_words:
+                        showRecognizedWords();
+                        break;
+                    case R.id.for_recognize_words:
+                        showWordsForRecognize();
+                        break;
+                }
+
+                return true;
+            }
+        });
+        menu.show();
+    }
+
+    private void showRecognizedWords(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        String text = "";
+        for(String s: currentUniqueRecognizedWords){
+            text += s + "\t";
+        }
+        builder.setMessage(text);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.create().show();
+    }
+
+    private void showWordsForRecognize(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        String text = "";
+        for(String s: currentReadableUniqueWords){
+            text += s + "\t";
+        }
+        builder.setMessage(text);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.create().show();
     }
 
     public void testRecognizedWords(){
@@ -273,10 +332,16 @@ public class MainActivity extends AppCompatActivity {
             String text = hypothesis.getHypstr();
             Log.wtf(TAG,"Partial: " + text);
             List<String> list = TextToGrammer.getUniqueWordsList(text);
+            text = "";
             for(String s:list){
-                if(!currentUniqueRecognizedWords.contains(s))
+                if(!currentUniqueRecognizedWords.contains(s)) {
                     currentUniqueRecognizedWords.add(s);
+                    text += s + "\t";
+                }
             }
+
+            Log.wtf(TAG,"Partial: " + text);
+
             //currentUniqueRecognizedWords.addAll(list);
             testRecognizedWords();
 
@@ -335,9 +400,9 @@ public class MainActivity extends AppCompatActivity {
     private static final String text = "Когда я был молод, игры только появились и вся наша компания только и жила ими!";
 
 
-    private static final String demoText = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно.\\n\\nЯ очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. В этом случае скорость прокрутки текста автоматически подстроится под мою речь. А если я начну импровизировать," +
-            " текст остановится и будет ждать пока я вернусь к чтению.\\n\\nА еще, я теперь знаю, что инженеры PIXAERO разработали мобильный телесуфлёр, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных телесуфлёров в мире! Больше информации о суфлёре PIXAERO MOBUS я всегда могу найти на сайте pixaero.pro.\\n\\n" +
-            "Если у меня возникнут идеи как сделать приложение или суфлёр еще более удобным, я напишу ребятам из PIXAERO и они постараются воплотить это в жизнь!";
+    private static final String demoText = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно. Я очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. В этом случае скорость прокрутки текста автоматически подстроиться под мою речь. А если я начну импровизировать," +
+            " текст остановится и будет ждать пока я вернусь к чтению"; //.\\n\\n А еще, я теперь знаю, что инженеры разработали мобильный телесуфлёр, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных телесуфлёров в мире! Больше информации о суфлёр я всегда могу найти на сайте \\n\\n " +
+//            "Если у меня возникнут идеи как сделать приложение или суфлёр еще более удобным, я напишу ребятам из и они постараются воплотить это в ЖИЗНЬ. ";
 
 
 

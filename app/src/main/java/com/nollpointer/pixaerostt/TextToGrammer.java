@@ -12,7 +12,7 @@ import java.util.List;
 
 public class TextToGrammer {
 
-    private static final String REGEX = "[\\p{Punct}\\s]+";
+    private static final String REGEX = "[\\p{Punct}\\s]+ | \\n+ | !+";
 
     public static String convertTextToJSGF(String text){
         StringBuilder builder = new StringBuilder();
@@ -45,8 +45,9 @@ public class TextToGrammer {
         return builder.toString();
     }
 
-    public static List<String> getUniqueWordsList(String text){
+    public static List<String> getUniqueWordsList(String t){
 
+        String text = t.toLowerCase();
         String[] array = text.split(REGEX);
         return Arrays.asList(array);
     }

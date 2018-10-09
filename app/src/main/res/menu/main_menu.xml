@@ -23,7 +23,16 @@
         android:title="Font -"
         android:icon="@drawable/ic_font_down"
         app:showAsAction="always"
-        android:orderInCategory="2"
+        android:orderInCategory="3"
         />
+
+    <item
+        android:id="@+id/more_info"
+        android:title="Info"
+        android:icon="@drawable/ic_info"
+        app:showAsAction="always"
+        android:orderInCategory="4"
+        />
+
 
 </menu>
