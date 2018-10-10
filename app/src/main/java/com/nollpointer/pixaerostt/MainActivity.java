@@ -27,6 +27,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.PopupMenu;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -58,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private CountDownView countDownView;
     private FrameLayout container;
     private Toolbar toolbar;
+    private ProgressBar progressBar;
 
     private ScrollViewController controller;
 
@@ -96,7 +98,9 @@ public class MainActivity extends AppCompatActivity {
         scrollView = findViewById(R.id.scrollView);
         container = findViewById(R.id.container);
         toolbar = findViewById(R.id.toolbar);
-
+        progressBar = findViewById(R.id.progressbar);
+        
+        progressBar.setProgress(0);
 
         countDownView = new CountDownView(this);
         container.addView(countDownView);
@@ -311,6 +315,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Log.wtf(TAG,Double.toString(Math.ceil(percent * 100)));
+        progressBar.setProgress(((int) Math.ceil(percent * 100)));
 
     }
 
@@ -333,14 +338,15 @@ public class MainActivity extends AppCompatActivity {
             Log.wtf(TAG,"Partial: " + text);
             List<String> list = TextToGrammer.getUniqueWordsList(text);
             text = "";
+            currentUniqueRecognizedWords.clear();
             for(String s:list){
                 if(!currentUniqueRecognizedWords.contains(s)) {
                     currentUniqueRecognizedWords.add(s);
-                    text += s + "\t";
                 }
+                //text += s + "\t";
             }
 
-            Log.wtf(TAG,"Partial: " + text);
+            //Log.wtf(TAG,"Partial: " + text);
 
             //currentUniqueRecognizedWords.addAll(list);
             testRecognizedWords();

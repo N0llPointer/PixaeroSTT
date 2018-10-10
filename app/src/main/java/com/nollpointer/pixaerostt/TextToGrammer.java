@@ -27,7 +27,7 @@ public class TextToGrammer {
 
         for(String w: words){
 
-            String word = w.toLowerCase();
+            String word = w.toLowerCase().trim();
             if(word.contains("\n")) {
                 continue;
             }
@@ -46,10 +46,15 @@ public class TextToGrammer {
     }
 
     public static List<String> getUniqueWordsList(String t){
-
+        ArrayList<String> list = new ArrayList<>();
         String text = t.toLowerCase();
         String[] array = text.split(REGEX);
-        return Arrays.asList(array);
+        for(int i=0;i<array.length;i++) {
+            String str = array[i].trim();
+            if(!list.contains(str))
+                list.add(str);
+        }
+        return list;
     }
 
 

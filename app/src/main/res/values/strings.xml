@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">PixaeroSTT</string>
+    <string name="app_name">PixaeroAudio</string>
     <string name="initialize">Инициализируем…</string>
     <string name="listening">Слушаем</string>
 
