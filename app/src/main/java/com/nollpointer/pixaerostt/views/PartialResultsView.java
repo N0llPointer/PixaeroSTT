@@ -19,7 +19,7 @@ public class PartialResultsView extends AppCompatTextView {
         setPadding(15,15,15,15);
         setBackgroundColor(0xc3757575);
         setVisibility(GONE);
-        setTextSize(40);
+        setTextSize(23);
         setTextColor(Color.WHITE);
         setGravity(Gravity.CENTER);
         setOnClickListener(new OnClickListener() {

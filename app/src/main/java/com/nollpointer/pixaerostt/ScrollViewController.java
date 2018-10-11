@@ -1,8 +1,6 @@
 package com.nollpointer.pixaerostt;
 
 import android.text.Layout;
-import android.view.DragEvent;
-import android.view.View;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -84,7 +82,7 @@ public class ScrollViewController {
     }
 
     public void swipeUp(){
-        scrollView.smoothScrollTo(0,scrollViewHeight/2 + scrollView.getScrollY());
+        scrollView.smoothScrollTo(0,scrollViewHeight + scrollView.getScrollY());
 
 
         currentShowingUniqueWords.clear();

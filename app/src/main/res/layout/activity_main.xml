@@ -18,7 +18,8 @@
             android:id="@+id/toolbar"
             android:background="@color/colorPrimary"
             app:title="@string/initialize"
-            app:titleTextColor="@android:color/white"/>
+            app:titleTextColor="@android:color/white"
+            app:subtitleTextColor="#d1d1d1"/>
 
         <ProgressBar
             android:layout_width="match_parent"

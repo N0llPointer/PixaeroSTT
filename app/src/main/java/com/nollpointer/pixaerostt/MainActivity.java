@@ -1,50 +1,39 @@
 package com.nollpointer.pixaerostt;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Environment;
-import android.speech.RecognitionListener;
-import android.speech.RecognizerIntent;
-import android.speech.SpeechRecognizer;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.util.TypedValue;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
-import com.crashlytics.android.answers.Answers;
 import com.nollpointer.pixaerostt.views.CountDownView;
+import com.nollpointer.pixaerostt.views.MenuSeekBar;
 import com.nollpointer.pixaerostt.views.PartialResultsView;
-
-import org.w3c.dom.Text;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 import edu.cmu.pocketsphinx.Assets;
 import edu.cmu.pocketsphinx.Hypothesis;
@@ -63,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private ProgressBar progressBar;
     private PartialResultsView partialResultsView;
+    private MenuSeekBar seekbar;
 
     private ScrollViewController controller;
 
@@ -91,6 +81,8 @@ public class MainActivity extends AppCompatActivity {
 
     private int indexOfNewSequence = 0;
 
+    private int threshold = 7;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,6 +106,29 @@ public class MainActivity extends AppCompatActivity {
 
         partialResultsView = new PartialResultsView(this);
         container.addView(partialResultsView);
+
+        seekbar = new MenuSeekBar(this);
+        container.addView(seekbar);
+
+        seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                toolbar.setSubtitle("Threshold = " + progress);
+                threshold = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                seekBar.setVisibility(View.GONE);
+                toolbar.setSubtitle(null);
+                resetRecognizer();
+            }
+        });
 
 
         toolbar.inflateMenu(R.menu.main_menu);
@@ -148,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
 
                     Log.wtf(TAG,controller.getCurrentShowingSubString());
 
-                    uniqueWords.addAll(TextToGrammer.getUniqueWordsList(controller.getCurrentShowingReadngSubString()));
+                    uniqueWords.addAll(TextToGrammer.getUniqueWordsList(controller.getCurrentShowingSubString()));
                 }
             }
         });
@@ -161,7 +176,8 @@ public class MainActivity extends AppCompatActivity {
                         textSize += 2;
                         break;
                     case R.id.font_down:
-                        textSize -=2;
+                        //textSize -=2;
+                        seekbar.show(container);
                         break;
                     case R.id.font_refresh:
                         askForAudioSave();
@@ -202,6 +218,13 @@ public class MainActivity extends AppCompatActivity {
 
         Log.wtf(DUMP,"Recognized: " + recognized);
         Log.wtf(DUMP,"Unique: " + unique);
+    }
+
+    private void resetRecognizer(){
+        recognizer.stop();
+        recognizer.shutdown();
+        runRecognizerSetup();
+        recognizerButton.setEnabled(false);
     }
 
     private void askForAudioSave(){
@@ -253,7 +276,7 @@ public class MainActivity extends AppCompatActivity {
             recognizer = SpeechRecognizerSetup.defaultSetup()
                     .setAcousticModel(new File(dir, "ru-ptm"))
                     .setDictionary(new File(dir, "ru.dic"))
-                    .setKeywordThreshold(1e-7f)
+                    .setKeywordThreshold((float) Math.pow(1,-threshold))
                     .setRawLogDir(new File(Environment.getExternalStorageDirectory(),AUDIO_FOLDER))
                     .getRecognizer();
         }catch (Exception e){
@@ -368,7 +391,7 @@ public class MainActivity extends AppCompatActivity {
         if(percent > 0.5){
             controller.swipeUp();
             uniqueWords.clear();
-            uniqueWords.addAll(TextToGrammer.getUniqueWordsList(controller.getCurrentShowingReadngSubString()));
+            uniqueWords.addAll(TextToGrammer.getUniqueWordsList(controller.getCurrentShowingSubString()));
         }
 
         Log.wtf(TAG,Double.toString(Math.ceil(percent * 100)));
@@ -443,6 +466,7 @@ public class MainActivity extends AppCompatActivity {
             }else {
                 toolbar.setTitle(R.string.app_name);
                 recognizerButton.setEnabled(true);
+                Toast.makeText(context,"Threshold = " + threshold,Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -466,7 +490,5 @@ public class MainActivity extends AppCompatActivity {
     private static final String demoText = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно. Я очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. В этом случае скорость прокрутки текста автоматически подстроиться под мою речь. А если я начну импровизировать," +
             " текст остановится и будет ждать пока я вернусь к чтению"; //.\\n\\n А еще, я теперь знаю, что инженеры разработали мобильный телесуфлёр, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных телесуфлёров в мире! Больше информации о суфлёр я всегда могу найти на сайте \\n\\n " +
 //            "Если у меня возникнут идеи как сделать приложение или суфлёр еще более удобным, я напишу ребятам из и они постараются воплотить это в ЖИЗНЬ. ";
-
-
 
 }
