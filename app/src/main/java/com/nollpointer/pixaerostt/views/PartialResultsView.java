@@ -2,18 +2,17 @@ package com.nollpointer.pixaerostt.views;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.os.CountDownTimer;
-import android.os.Handler;
 import android.support.v7.widget.AppCompatTextView;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.FrameLayout;
 
+public class PartialResultsView extends AppCompatTextView {
 
-public class CountDownView extends AppCompatTextView {
-
-    public CountDownView(Context context) {
+    public PartialResultsView(Context context) {
         super(context);
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT);
+        //params.set
 
         setLayoutParams(params);
 
@@ -22,29 +21,21 @@ public class CountDownView extends AppCompatTextView {
         setVisibility(GONE);
         setTextSize(40);
         setTextColor(Color.WHITE);
-
         setGravity(Gravity.CENTER);
-    }
-
-    public void startCountDown(int count){
-        setText(Integer.toString(count));
-
-        new CountDownTimer(count*1000,1000){
+        setOnClickListener(new OnClickListener() {
             @Override
-            public void onTick(long millisUntilFinished) {
-                double number = millisUntilFinished/1000.;
-                int numero = ((int) Math.ceil(number));
-                setText(Integer.toString(numero));
-            }
-
-            @Override
-            public void onFinish() {
+            public void onClick(View v) {
                 setVisibility(GONE);
             }
-        }.start();
+        });
+    }
 
+    public void setText(String text){
+        super.setText(text);
+    }
+
+    public void show(){
+        setVisibility(VISIBLE);
     }
 
 }
-
-

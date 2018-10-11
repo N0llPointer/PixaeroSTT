@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -35,6 +36,7 @@ import android.widget.Toast;
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.nollpointer.pixaerostt.views.CountDownView;
+import com.nollpointer.pixaerostt.views.PartialResultsView;
 
 import org.w3c.dom.Text;
 
@@ -60,16 +62,19 @@ public class MainActivity extends AppCompatActivity {
     private FrameLayout container;
     private Toolbar toolbar;
     private ProgressBar progressBar;
+    private PartialResultsView partialResultsView;
 
     private ScrollViewController controller;
 
     public static String TAG = "STT";
-
+    public static String DUMP = "DUMP";
 
     private static final String KWS_SEARCH = "wakeup";
     private static final String MENU_SEARCH = "menu";
 
     private static final String KEYPHRASE = "well hello";
+
+    public static final String AUDIO_FOLDER = "Pixaero/Audio";
 
     private edu.cmu.pocketsphinx.SpeechRecognizer recognizer;
 
@@ -77,12 +82,14 @@ public class MainActivity extends AppCompatActivity {
 
     private MediaPlayer voiceRecognitionSoundEffect;
 
-    private ArrayList<String> currentUniqueRecognizedWords = new ArrayList<>();
+    private ArrayList<String> recognizedWords = new ArrayList<>();
 
-    private ArrayList<String> currentReadableUniqueWords = new ArrayList<>();
+    private ArrayList<String> uniqueWords = new ArrayList<>();
 
 
     private int textSize = 40;
+
+    private int indexOfNewSequence = 0;
 
 
     @Override
@@ -104,6 +111,9 @@ public class MainActivity extends AppCompatActivity {
 
         countDownView = new CountDownView(this);
         container.addView(countDownView);
+
+        partialResultsView = new PartialResultsView(this);
+        container.addView(partialResultsView);
 
 
         toolbar.inflateMenu(R.menu.main_menu);
@@ -138,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
 
                     Log.wtf(TAG,controller.getCurrentShowingSubString());
 
-                    currentReadableUniqueWords.addAll(TextToGrammer.getUniqueWordsList(controller.getCurrentShowingReadngSubString()));
+                    uniqueWords.addAll(TextToGrammer.getUniqueWordsList(controller.getCurrentShowingReadngSubString()));
                 }
             }
         });
@@ -154,10 +164,12 @@ public class MainActivity extends AppCompatActivity {
                         textSize -=2;
                         break;
                     case R.id.font_refresh:
+                        askForAudioSave();
                         textSize = 40;
                         break;
                     case R.id.more_info:
-                        showMoreInfo();
+                        //showMoreInfo();
+                        dumpToLogEverything();
                         break;
                 }
                 if(textSize > 0)
@@ -175,6 +187,49 @@ public class MainActivity extends AppCompatActivity {
 
         contentText.setText(demoText);
 
+    }
+
+    private void dumpToLogEverything(){
+        String recognized = "";
+        String unique = "";
+        for(String s:recognizedWords){
+            recognized += s + " | ";
+        }
+
+        for(String s: uniqueWords){
+            unique += s + " | ";
+        }
+
+        Log.wtf(DUMP,"Recognized: " + recognized);
+        Log.wtf(DUMP,"Unique: " + unique);
+    }
+
+    private void askForAudioSave(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setPositiveButton("Ок", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                boolean isCreated = createFolderForRawAudio();
+                Snackbar.make(container,"Создано: " + isCreated,Snackbar.LENGTH_SHORT).show();
+                dialog.dismiss();
+            }
+        });
+        builder.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.setTitle("Создание папки");
+        builder.setMessage("Вы хотите сохранять аудиозаписи суфлера?");
+        builder.create().show();
+    }
+
+    private boolean createFolderForRawAudio(){
+        String folder_main = "Pixaero/Audio";
+
+        File file = new File(Environment.getExternalStorageDirectory(), folder_main);
+        return file.mkdirs();
     }
 
     @Override
@@ -199,6 +254,7 @@ public class MainActivity extends AppCompatActivity {
                     .setAcousticModel(new File(dir, "ru-ptm"))
                     .setDictionary(new File(dir, "ru.dic"))
                     .setKeywordThreshold(1e-7f)
+                    .setRawLogDir(new File(Environment.getExternalStorageDirectory(),AUDIO_FOLDER))
                     .getRecognizer();
         }catch (Exception e){
             Log.wtf(TAG,e);
@@ -213,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
         String menuGrammar = TextToGrammer.convertTextToJSGF(demoText);
         File file = TextToGrammer.saveJSFGToFile("test",menuGrammar,dir);
 
-        recognizer.addGrammarSearch(MENU_SEARCH,menuGrammar);
+        recognizer.addGrammarSearch(MENU_SEARCH,file);
     }
 
     private void switchSearch(String str){
@@ -269,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
     private void showRecognizedWords(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         String text = "";
-        for(String s: currentUniqueRecognizedWords){
+        for(String s: recognizedWords){
             text += s + "\t";
         }
         builder.setMessage(text);
@@ -285,7 +341,7 @@ public class MainActivity extends AppCompatActivity {
     private void showWordsForRecognize(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         String text = "";
-        for(String s: currentReadableUniqueWords){
+        for(String s: uniqueWords){
             text += s + "\t";
         }
         builder.setMessage(text);
@@ -298,31 +354,34 @@ public class MainActivity extends AppCompatActivity {
         builder.create().show();
     }
 
-    public void testRecognizedWords(){
+    public boolean testRecognizedWords(){
 
-        int size = currentReadableUniqueWords.size();
+        int size = uniqueWords.size();
         int recognized = 0;
-        for(String s:currentUniqueRecognizedWords){
-            if(currentReadableUniqueWords.contains(s))
+        for(String s:recognizedWords){
+            if(uniqueWords.contains(s))
                 recognized++;
         }
         double percent = recognized;
         percent /= size;
+        Log.wtf(TAG,recognized + " " + size + " " + percent);
         if(percent > 0.5){
             controller.swipeUp();
-            currentReadableUniqueWords.clear();
-            currentReadableUniqueWords.addAll(TextToGrammer.getUniqueWordsList(controller.getCurrentShowingReadngSubString()));
+            uniqueWords.clear();
+            uniqueWords.addAll(TextToGrammer.getUniqueWordsList(controller.getCurrentShowingReadngSubString()));
         }
 
         Log.wtf(TAG,Double.toString(Math.ceil(percent * 100)));
         progressBar.setProgress(((int) Math.ceil(percent * 100)));
 
+        return percent > 0.5;
     }
 
     class recognizerListener implements edu.cmu.pocketsphinx.RecognitionListener{
         @Override
         public void onBeginningOfSpeech() {
             Log.wtf(TAG,"Start of the Speech");
+            partialResultsView.show();
         }
 
         @Override
@@ -336,20 +395,18 @@ public class MainActivity extends AppCompatActivity {
                 return;
             String text = hypothesis.getHypstr();
             Log.wtf(TAG,"Partial: " + text);
-            List<String> list = TextToGrammer.getUniqueWordsList(text);
-            text = "";
-            currentUniqueRecognizedWords.clear();
-            for(String s:list){
-                if(!currentUniqueRecognizedWords.contains(s)) {
-                    currentUniqueRecognizedWords.add(s);
-                }
-                //text += s + "\t";
-            }
+            List<String> list = TextToGrammer.getUniqueWordsWithoutPunctuation(text.substring(indexOfNewSequence));
+            recognizedWords.clear();
+            recognizedWords.addAll(list);
 
-            //Log.wtf(TAG,"Partial: " + text);
+            String recd = "";
+            for(String s: list)
+                recd += s + " | ";
 
-            //currentUniqueRecognizedWords.addAll(list);
-            testRecognizedWords();
+            partialResultsView.setText(text.substring(indexOfNewSequence) + "\n---\n" + recd);
+
+            if(testRecognizedWords())
+                indexOfNewSequence = text.length() - 1;
 
         }
 
