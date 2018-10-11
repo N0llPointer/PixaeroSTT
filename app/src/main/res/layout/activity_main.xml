@@ -73,7 +73,7 @@
                 android:paddingEnd="10dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Sphinx Recognizer"
+                android:text="@string/recognize"
                 android:textSize="25sp"
                 android:id="@+id/button_voice_recognizer_sphynx"
                 android:layout_gravity="center_horizontal"/>

@@ -38,16 +38,6 @@ public class ScrollViewController {
         scrollViewHeight = scrollView.getHeight();
         lineHeight = textViewHeight / lineCount;
 
-//        scrollView.setOnDragListener(new View.OnDragListener() {
-//            @Override
-//            public boolean onDrag(View v, DragEvent event) {
-//                if(event.getAction() == DragEvent.ACTION_DRAG_ENDED){
-//
-//                    return true;
-//                }
-//                return false;
-//            }
-//        });
         currentShowingUniqueWords.addAll(TextToGrammer.getUniqueWordsList(getCurrentShowingReadngSubString()));
     }
 
@@ -66,7 +56,7 @@ public class ScrollViewController {
         return text.substring(start,end);
     }
 
-    public String getCurrentShowingReadngSubString(){
+    private String getCurrentShowingReadngSubString(){
         Layout textViewLayout = textView.getLayout();
 
         int currentY = scrollView.getScrollY();
@@ -83,8 +73,6 @@ public class ScrollViewController {
 
     public void swipeUp(){
         scrollView.smoothScrollTo(0,scrollViewHeight + scrollView.getScrollY());
-
-
         currentShowingUniqueWords.clear();
         currentShowingUniqueWords.addAll(TextToGrammer.getUniqueWordsList(getCurrentShowingReadngSubString()));
     }

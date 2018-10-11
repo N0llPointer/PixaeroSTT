@@ -19,7 +19,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
@@ -62,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String KWS_SEARCH = "wakeup";
     private static final String MENU_SEARCH = "menu";
 
-    private static final String KEYPHRASE = "well hello";
+    //private static final String KEYPHRASE = "well hello";
 
     public static final String AUDIO_FOLDER = "Pixaero/Audio";
 
@@ -206,18 +205,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void dumpToLogEverything(){
-        String recognized = "";
-        String unique = "";
+        StringBuilder recognized = new StringBuilder();
+        StringBuilder unique = new StringBuilder();
         for(String s:recognizedWords){
-            recognized += s + " | ";
+            recognized.append(s);
+            recognized.append(" | ");
         }
 
         for(String s: uniqueWords){
-            unique += s + " | ";
+            unique.append(s);
+            unique.append(" | ");
         }
 
-        Log.wtf(DUMP,"Recognized: " + recognized);
-        Log.wtf(DUMP,"Unique: " + unique);
+        Log.wtf(DUMP,"Recognized: " + recognized.toString());
+        Log.wtf(DUMP,"Unique: " + unique.toString());
     }
 
     private void resetRecognizer(){
@@ -271,23 +272,30 @@ public class MainActivity extends AppCompatActivity {
         new RecognizerSetup(this).execute();
     }
 
+    private File createAudioSessionFolder(){
+        long time = System.currentTimeMillis();
+        String sessionFolderName = Long.toHexString(time);
+
+        File file = new File(Environment.getExternalStorageDirectory(),AUDIO_FOLDER + "/" + sessionFolderName);
+        file.mkdir();
+
+        return file;
+    }
+
     private void setupRecognizer(File dir) {
+        File audioSessionFolder = createAudioSessionFolder();
         try {
             recognizer = SpeechRecognizerSetup.defaultSetup()
                     .setAcousticModel(new File(dir, "ru-ptm"))
                     .setDictionary(new File(dir, "ru.dic"))
                     .setKeywordThreshold((float) Math.pow(1,-threshold))
-                    .setRawLogDir(new File(Environment.getExternalStorageDirectory(),AUDIO_FOLDER))
+                    .setRawLogDir(audioSessionFolder)
                     .getRecognizer();
         }catch (Exception e){
             Log.wtf(TAG,e);
         }
 
         recognizer.addListener(new recognizerListener());
-
-        //recognizer.addKeyphraseSearch(KWS_SEARCH,KEYPHRASE);
-
-        //File menuGrammar = new File(dir,"mymenu.gram");
 
         String menuGrammar = TextToGrammer.convertTextToJSGF(demoText);
         File file = TextToGrammer.saveJSFGToFile("test",menuGrammar,dir);
@@ -321,60 +329,6 @@ public class MainActivity extends AppCompatActivity {
             recognizer.stop();
         isPocketOnGoing = false;
         toolbar.setTitle(R.string.app_name);
-    }
-
-    private void showMoreInfo(){
-
-        PopupMenu menu = new PopupMenu(this,findViewById(R.id.more_info));
-        menu.inflate(R.menu.popup_menu);
-        menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch(item.getItemId()){
-                    case R.id.recognized_words:
-                        showRecognizedWords();
-                        break;
-                    case R.id.for_recognize_words:
-                        showWordsForRecognize();
-                        break;
-                }
-
-                return true;
-            }
-        });
-        menu.show();
-    }
-
-    private void showRecognizedWords(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        String text = "";
-        for(String s: recognizedWords){
-            text += s + "\t";
-        }
-        builder.setMessage(text);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        builder.create().show();
-    }
-
-    private void showWordsForRecognize(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        String text = "";
-        for(String s: uniqueWords){
-            text += s + "\t";
-        }
-        builder.setMessage(text);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        builder.create().show();
     }
 
     public boolean testRecognizedWords(){

@@ -5,9 +5,7 @@ import android.util.Log;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.nollpointer.pixaerostt.MainActivity.DUMP;
@@ -15,7 +13,7 @@ import static com.nollpointer.pixaerostt.MainActivity.DUMP;
 public class TextToGrammer {
 
     private static final String REGEX = "[\\p{Punct}\\s]+ | \\n+ | !+";
-    private static final String DEBUG_REGEX = "[,.?;:!\\\\-\\\\s]+";
+    //private static final String DEBUG_REGEX = "[,.?;:!\\\\-\\\\s]+";
 
     public static String convertTextToJSGF(String text){
         StringBuilder builder = new StringBuilder();
@@ -26,7 +24,9 @@ public class TextToGrammer {
         //String[] words = text.split("[,.?;:!\\-\\s]+");
         String[] words = text.split(REGEX);
 
-        builder.append(" " + words[0].toLowerCase() + " |");
+        builder.append(" ");
+        builder.append(words[0].toLowerCase());
+        builder.append(" |");
 
         for(String w: words){
 

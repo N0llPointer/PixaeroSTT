@@ -3,7 +3,6 @@ package com.nollpointer.pixaerostt.views;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.CountDownTimer;
-import android.os.Handler;
 import android.support.v7.widget.AppCompatTextView;
 import android.view.Gravity;
 import android.widget.FrameLayout;
