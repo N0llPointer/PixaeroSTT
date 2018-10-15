@@ -3,32 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/font_refresh"
-        android:title="Refresh"
-        android:icon="@drawable/ic_refresh"
+        android:id="@+id/save_voice"
+        android:title="Save Voice"
+        android:icon="@drawable/ic_save_voice"
         app:showAsAction="always"
         android:orderInCategory="1"
         />
 
     <item
-        android:id="@+id/font_up"
-        android:title="Font +"
-        android:icon="@drawable/ic_font_up"
-        app:showAsAction="always"
-        android:orderInCategory="2"
-        />
-
-    <item
-        android:id="@+id/font_down"
-        android:title="Font -"
-        android:icon="@drawable/ic_font_down"
+        android:id="@+id/threshold"
+        android:title="Threshold"
+        android:icon="@drawable/ic_threshold"
         app:showAsAction="always"
         android:orderInCategory="3"
         />
 
     <item
         android:id="@+id/more_info"
-        android:title="Info"
+        android:title="Dump Info"
         android:icon="@drawable/ic_info"
         app:showAsAction="always"
         android:orderInCategory="4"

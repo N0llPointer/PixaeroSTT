@@ -1,6 +1,8 @@
-package com.nollpointer.pixaerostt;
+package com.nollpointer.pixaerostt.utils;
 
 import android.util.Log;
+
+import com.nollpointer.pixaerostt.MainActivity;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -8,9 +10,11 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.cmu.pocketsphinx.Decoder;
+
 import static com.nollpointer.pixaerostt.MainActivity.DUMP;
 
-public class TextToGrammer {
+public class TextToGrammar {
 
     private static final String REGEX = "[\\p{Punct}\\s]+ | \\n+ | !+";
     //private static final String DEBUG_REGEX = "[,.?;:!\\\\-\\\\s]+";
@@ -28,12 +32,15 @@ public class TextToGrammer {
         builder.append(words[0].toLowerCase());
         builder.append(" |");
 
+
         for(String w: words){
 
             String word = w.toLowerCase().trim();
             if(word.contains("\n")) {
                 continue;
             }
+
+
 
             if(builder.toString().contains(" " + word + " "))
                 continue;
@@ -46,6 +53,56 @@ public class TextToGrammer {
         builder.setCharAt(builder.length()-1,';');
 
         return builder.toString();
+    }
+
+    public static String convertTextToJSGF(String text,Decoder decoder){
+        StringBuilder builder = new StringBuilder();
+        builder.append("#JSGF V1.0;\ngrammar commands;\n");
+        builder.append("public <command> = <commands>+;\n");
+        builder.append("<commands> =");
+
+        //String[] words = text.split("[,.?;:!\\-\\s]+");
+        String[] words = deletePunctuationSigns(text.toLowerCase()).split("\\s+");
+
+        builder.append("\t");
+        builder.append(words[0].toLowerCase());
+        builder.append("\t|");
+
+
+        for(String word: words){
+
+            //String word = w.toLowerCase().trim();
+            if(decoder.lookupWord(word) == null) {
+                continue;
+            }
+
+
+
+            if(builder.toString().contains("\t" + word + "\t"))
+                continue;
+
+            builder.append("\t");
+            builder.append(word);
+            builder.append("\t|");
+        }
+
+        builder.setCharAt(builder.length()-1,';');
+
+        return builder.toString();
+    }
+
+    public static void checkIfWordsAreInDictionary(Decoder decoder,String text){
+        String[] words = deletePunctuationSigns(text.toLowerCase()).split("\\s+");
+        int size = words.length;
+        int errors = 0;
+        for(String word: words) {
+            if (decoder.lookupWord(word) == null) {
+                errors++;
+                Log.e("Check", "Unknown word: " + word);
+            }
+        }
+
+        Log.e("Check", "total percent of errors: " + ((int) Math.ceil(((double) errors / size)*100)) + " %");
     }
 
     public static List<String> getUniqueWordsList(String t){

@@ -19,8 +19,6 @@ public class ScrollViewController {
     private int scrollViewHeight;
     private int lineHeight;
 
-    private ArrayList<String> currentShowingUniqueWords = new ArrayList<>();
-
 
     public ScrollViewController(ScrollView scrollView, TextView textView,MainActivity activity) {
         this.scrollView = scrollView;
@@ -37,8 +35,6 @@ public class ScrollViewController {
         textViewHeight = textViewLayout.getHeight();
         scrollViewHeight = scrollView.getHeight();
         lineHeight = textViewHeight / lineCount;
-
-        currentShowingUniqueWords.addAll(TextToGrammer.getUniqueWordsList(getCurrentShowingReadngSubString()));
     }
 
     public String getCurrentShowingSubString(){
@@ -73,8 +69,6 @@ public class ScrollViewController {
 
     public void swipeUp(){
         scrollView.smoothScrollTo(0,scrollViewHeight + scrollView.getScrollY());
-        currentShowingUniqueWords.clear();
-        currentShowingUniqueWords.addAll(TextToGrammer.getUniqueWordsList(getCurrentShowingReadngSubString()));
     }
 
 

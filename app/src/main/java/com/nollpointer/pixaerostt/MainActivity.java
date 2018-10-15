@@ -1,6 +1,7 @@
 package com.nollpointer.pixaerostt;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
@@ -26,6 +27,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
+import com.nollpointer.pixaerostt.utils.TextToGrammar;
 import com.nollpointer.pixaerostt.views.CountDownView;
 import com.nollpointer.pixaerostt.views.MenuSeekBar;
 import com.nollpointer.pixaerostt.views.PartialResultsView;
@@ -42,6 +44,8 @@ import io.fabric.sdk.android.Fabric;
 public class MainActivity extends AppCompatActivity {
 
     private Button recognizerButton;
+
+    private Dialog progressDialog;
 
 
     private ScrollView scrollView;
@@ -74,9 +78,6 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> recognizedWords = new ArrayList<>();
 
     private ArrayList<String> uniqueWords = new ArrayList<>();
-
-
-    private int textSize = 40;
 
     private int indexOfNewSequence = 0;
 
@@ -131,10 +132,10 @@ public class MainActivity extends AppCompatActivity {
 
 
         toolbar.inflateMenu(R.menu.main_menu);
-        contentText.setText(text);
 
-        int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+        int permissionWrite = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int permissionRecord = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (permissionRecord != PackageManager.PERMISSION_GRANTED && permissionWrite != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO}, 1);
             return;
         }
@@ -162,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
 
                     Log.wtf(TAG,controller.getCurrentShowingSubString());
 
-                    uniqueWords.addAll(TextToGrammer.getUniqueWordsList(controller.getCurrentShowingSubString()));
+                    uniqueWords.addAll(TextToGrammar.getUniqueWordsList(controller.getCurrentShowingSubString()));
                 }
             }
         });
@@ -171,36 +172,31 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()){
-                    case R.id.font_up:
-                        textSize += 2;
-                        break;
-                    case R.id.font_down:
-                        //textSize -=2;
+                    case R.id.threshold:
                         seekbar.show(container);
                         break;
-                    case R.id.font_refresh:
+                    case R.id.save_voice:
                         askForAudioSave();
-                        textSize = 40;
                         break;
                     case R.id.more_info:
-                        //showMoreInfo();
                         dumpToLogEverything();
                         break;
                 }
-                if(textSize > 0)
-                    contentText.setTextSize(textSize);
-                else
-                    contentText.setTextSize(1);
                 return true;
             }
         });
 
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        builder.setView(R.layout.progress_dialog);
+//        builder.setCancelable(false);
+//        progressDialog = builder.create();
+//        progressDialog.show();
 
         runRecognizerSetup();
 
         voiceRecognitionSoundEffect = MediaPlayer.create(this,R.raw.stairs);
 
-        contentText.setText(demoText);
+        contentText.setText(englishText);
 
     }
 
@@ -286,10 +282,13 @@ public class MainActivity extends AppCompatActivity {
         File audioSessionFolder = createAudioSessionFolder();
         try {
             recognizer = SpeechRecognizerSetup.defaultSetup()
-                    .setAcousticModel(new File(dir, "ru-ptm"))
-                    .setDictionary(new File(dir, "ru.dic"))
+                    .setAcousticModel(new File(dir, "en-us-ptm"))
+                    .setDictionary(new File(dir, "cmudict-en-us.dict"))
                     .setKeywordThreshold((float) Math.pow(1,-threshold))
                     .setRawLogDir(audioSessionFolder)
+
+                    .setBoolean("-remove_noise", false)
+
                     .getRecognizer();
         }catch (Exception e){
             Log.wtf(TAG,e);
@@ -297,20 +296,16 @@ public class MainActivity extends AppCompatActivity {
 
         recognizer.addListener(new recognizerListener());
 
-        String menuGrammar = TextToGrammer.convertTextToJSGF(demoText);
-        File file = TextToGrammer.saveJSFGToFile("test",menuGrammar,dir);
+        TextToGrammar.checkIfWordsAreInDictionary(recognizer.getDecoder(),englishText);
+
+        String menuGrammar = TextToGrammar.convertTextToJSGF(englishText,recognizer.getDecoder());
+        File file = TextToGrammar.saveJSFGToFile("test",menuGrammar,dir);
 
         recognizer.addGrammarSearch(MENU_SEARCH,file);
+
+        //progressDialog.dismiss();
     }
 
-    private void switchSearch(String str){
-        recognizer.stop();
-
-        if(str.equals(KWS_SEARCH))
-            recognizer.startListening(str);
-        else
-            recognizer.startListening(str, 10000);
-    }
 
     @Override
     protected void onDestroy() {
@@ -345,7 +340,7 @@ public class MainActivity extends AppCompatActivity {
         if(percent > 0.5){
             controller.swipeUp();
             uniqueWords.clear();
-            uniqueWords.addAll(TextToGrammer.getUniqueWordsList(controller.getCurrentShowingSubString()));
+            uniqueWords.addAll(TextToGrammar.getUniqueWordsList(controller.getCurrentShowingSubString()));
         }
 
         Log.wtf(TAG,Double.toString(Math.ceil(percent * 100)));
@@ -372,7 +367,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             String text = hypothesis.getHypstr();
             Log.wtf(TAG,"Partial: " + text);
-            List<String> list = TextToGrammer.getUniqueWordsWithoutPunctuation(text.substring(indexOfNewSequence));
+            List<String> list = TextToGrammar.getUniqueWordsWithoutPunctuation(text.substring(indexOfNewSequence));
             recognizedWords.clear();
             recognizedWords.addAll(list);
 
@@ -400,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onTimeout() {
-            switchSearch(KWS_SEARCH);
+            //switchSearch(KWS_SEARCH);
         }
     }
 
@@ -440,10 +435,26 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String text = "Когда я был молод, игры только появились и вся наша компания только и жила ими!";
 
-
-    private static final String demoText = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно. Я очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. В этом случае скорость прокрутки текста автоматически подстроиться под мою речь. А если я начну импровизировать," +
-            " текст остановится и будет ждать пока я вернусь к чтению"; //.\\n\\n А еще, я теперь знаю, что инженеры разработали мобильный телесуфлёр, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных телесуфлёров в мире! Больше информации о суфлёр я всегда могу найти на сайте \\n\\n " +
+    private static final String demoText = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно. Я очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. " +
+            "В этом случае скорость прокрутки текста автоматически подстроиться под мою речь. А если я начну импровизировать," +
+            " текст остановится и будет ждать пока я вернусь к чтению "; //.\\n\\n А еще, я теперь знаю, что инженеры разработали мобильный телесуфлёр, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных
+    // телесуфлёров в мире! Больше информации о суфлёр я всегда могу найти на сайте \\n\\n " +
 //            "Если у меня возникнут идеи как сделать приложение или суфлёр еще более удобным, я напишу ребятам из и они постараются воплотить это в ЖИЗНЬ. ";
 
+    private static final String demka = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно.\n" +
+            "\n" +
+            "Я очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. В этом случае скорость прокрутки текста автоматически подстроится под мою речь. А если я начну импровизировать, текст остановится и будет ждать пока я вернусь к чтению.\n" +
+            "\n" +
+            "А еще, я теперь знаю, что инженеры PIXAERO разработали мобильный телесуфлер, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных телесуфлеров в мире! Больше информации о суфлере PIXAERO MOBUS я всегда могу найти на сайте pixaero.pro.\n" +
+            "\n" +
+            "Если у меня возникнут идеи как сделать приложение или суфлер еще более удобным, я напишу ребятам из PIXAERO и они постараются воплотить это в жизнь!";
 
+    private static final String currentText = "А сейчас парень и в каком формате вам не надо было дома остаться без НДС с другой компанией и все что нужно для начала работы и в конце концов это не важно что бы вы прислать фото не очень хорошо что у вас он есть у вас есть возможность и стоимость по договору подряда и все это время в пути в том же духе в не знаю как это развивать и все же я могу ему не хватает в универ " +
+            "новая и не было бы хорошо с вами по Скайпу и не было оповещения и не было оповещения и трансляции на 50 не оч хорошо в ближайшее к нам на склад не знаю почему не работает и в конце недели или на группу подписался в том же месте не было бы здорово встретиться в четверг в том же году в универ новая в том числе на работе не было оповещения от меня и у него огромная просьба к вам не нужно для того настроя не оч " +
+            "охота за информацию о вашем заказе в универ новая и новейшая технология и не было в наличии есть все необходимые данные не знаю что делать будешь уже в кровати в том же месте решим как раз в месяц в США от плиты взять в аренду в том же месте и в этом году мы не сможем получить от вас было получено письмо не является обязательным является одним или двумя руками не оч удобно и не только от меня пойдем к сожалению" +
+            " в связи в случае необходимости готов работать по договору займа в универ новая в том числе и по проектам и в конце недели и до конца дня пришлю в ближайшее будущее России по республике Казахстан Алматы в универ и в конце есть в наличие и цену не знаю почему так что я уже хочу полировать в универ новая и не только" +
+            " в том числе в том же месте не было оповещения о нем не было бы хорошо чтобы за что я уже забыл про меня есть план в приложении во вкладке не так давно я тоже так что не надо будет в понедельник после 3 курс по дифурам экзамен на индивидуальный предприниматель в том числе в не очень охота и предоставление информации в соответствии со строками в универ и не понял о чём речь в данном этапе это сообщение";
+
+    private static final String englishText = "hello guys what is up boys well basically everything is pretty shitty due to some reasons like low quality of voice recognition. As you can understand this is pretty shit and I do not really know what to do. each time i think about it i just want ot stop and go out but soon i will get salary " +
+            "that's why i am still here. damn so much text this is terrific and pretty sad because i am just repeating myself which is not that great. Also i will meet creator of current order and he would love to see real results which i can't show right now due to very low stupid voice recognition system called fucking sphinx gosh when this will end DAMN.";
 }

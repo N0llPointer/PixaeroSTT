@@ -1,5 +1,4 @@
 cmudict-en-us.dict
-digits.gram
 en-phone.dmp
 en-us-ptm/README
 en-us-ptm/feat.params
@@ -9,8 +8,6 @@ en-us-ptm/noisedict
 en-us-ptm/sendump
 en-us-ptm/transition_matrices
 en-us-ptm/variances
-menu.gram
-mymenu.gram
 ru-ptm/feat.params
 ru-ptm/mdef
 ru-ptm/means
@@ -20,4 +17,3 @@ ru-ptm/sendump
 ru-ptm/transition_matrices
 ru-ptm/variances
 ru.dic
-weather.dmp
