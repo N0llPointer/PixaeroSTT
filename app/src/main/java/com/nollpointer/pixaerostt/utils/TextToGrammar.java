@@ -77,18 +77,36 @@ public class TextToGrammar {
             }
 
 
-
             if(builder.toString().contains("\t" + word + "\t"))
                 continue;
 
-            builder.append("\t");
+            //int threshold = getOptimalThreshold(word.length());
+
+
+            builder.append("\n\t");
             builder.append(word);
+            //builder.append(" /1e-" + threshold + "/");
+
+
             builder.append("\t|");
         }
 
         builder.setCharAt(builder.length()-1,';');
 
         return builder.toString();
+    }
+
+    private static int getOptimalThreshold(int wordSize){
+        if(wordSize == 1)
+            return 1;
+        else if(wordSize == 2)
+            return 3;
+        else if(wordSize < 5)
+            return 10;
+        else if(wordSize < 10)
+            return 20;
+        else
+            return 30;
     }
 
     public static void checkIfWordsAreInDictionary(Decoder decoder,String text){

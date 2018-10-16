@@ -151,8 +151,8 @@ public class MainActivity extends AppCompatActivity {
                     toolbar.setTitle(R.string.listening);
                     countDownView.setVisibility(View.VISIBLE);
                     countDownView.startCountDown(3);
-
                 }
+                indexOfNewSequence = 0;
                 voiceRecognitionSoundEffect.start();
                 isPocketOnGoing = !isPocketOnGoing;
 
@@ -163,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
 
                     Log.wtf(TAG,controller.getCurrentShowingSubString());
 
-                    uniqueWords.addAll(TextToGrammar.getUniqueWordsList(controller.getCurrentShowingSubString()));
+                    uniqueWords.addAll(TextToGrammar.getUniqueWordsList(demka));
                 }
             }
         });
@@ -196,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
 
         voiceRecognitionSoundEffect = MediaPlayer.create(this,R.raw.stairs);
 
-        contentText.setText(englishText);
+        contentText.setText(demka);
 
     }
 
@@ -282,12 +282,12 @@ public class MainActivity extends AppCompatActivity {
         File audioSessionFolder = createAudioSessionFolder();
         try {
             recognizer = SpeechRecognizerSetup.defaultSetup()
-                    .setAcousticModel(new File(dir, "en-us-ptm"))
-                    .setDictionary(new File(dir, "cmudict-en-us.dict"))
+                    .setAcousticModel(new File(dir, "ru-ptm"))
+                    .setDictionary(new File(dir, "ru.dic"))
                     .setKeywordThreshold((float) Math.pow(1,-threshold))
                     .setRawLogDir(audioSessionFolder)
 
-                    .setBoolean("-remove_noise", false)
+                    //.setBoolean("-remove_noise", false)
 
                     .getRecognizer();
         }catch (Exception e){
@@ -296,12 +296,13 @@ public class MainActivity extends AppCompatActivity {
 
         recognizer.addListener(new recognizerListener());
 
-        TextToGrammar.checkIfWordsAreInDictionary(recognizer.getDecoder(),englishText);
+        TextToGrammar.checkIfWordsAreInDictionary(recognizer.getDecoder(),demka);
 
-        String menuGrammar = TextToGrammar.convertTextToJSGF(englishText,recognizer.getDecoder());
+        String menuGrammar = TextToGrammar.convertTextToJSGF(demka,recognizer.getDecoder());
         File file = TextToGrammar.saveJSFGToFile("test",menuGrammar,dir);
 
         recognizer.addGrammarSearch(MENU_SEARCH,file);
+
 
         //progressDialog.dismiss();
     }
@@ -337,11 +338,11 @@ public class MainActivity extends AppCompatActivity {
         double percent = recognized;
         percent /= size;
         Log.wtf(TAG,recognized + " " + size + " " + percent);
-        if(percent > 0.5){
-            controller.swipeUp();
-            uniqueWords.clear();
-            uniqueWords.addAll(TextToGrammar.getUniqueWordsList(controller.getCurrentShowingSubString()));
-        }
+        //if(percent > 0.5){
+        //    controller.swipeUp();
+        //    uniqueWords.clear();
+        //    uniqueWords.addAll(TextToGrammar.getUniqueWordsList(controller.getCurrentShowingSubString()));
+        //}
 
         Log.wtf(TAG,Double.toString(Math.ceil(percent * 100)));
         progressBar.setProgress(((int) Math.ceil(percent * 100)));
@@ -366,7 +367,7 @@ public class MainActivity extends AppCompatActivity {
             if (hypothesis == null)
                 return;
             String text = hypothesis.getHypstr();
-            Log.wtf(TAG,"Partial: " + text);
+            //Log.wtf(TAG,"Partial: " + text);
             List<String> list = TextToGrammar.getUniqueWordsWithoutPunctuation(text.substring(indexOfNewSequence));
             recognizedWords.clear();
             recognizedWords.addAll(list);
@@ -376,9 +377,10 @@ public class MainActivity extends AppCompatActivity {
                 recd += s + " | ";
 
             partialResultsView.setText(text.substring(indexOfNewSequence) + "\n---\n" + recd);
+            testRecognizedWords();
 
-            if(testRecognizedWords())
-                indexOfNewSequence = text.length() - 1;
+            //if(testRecognizedWords())
+            //    indexOfNewSequence = text.length() - 1;
 
         }
 
@@ -432,9 +434,6 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
     }
-
-    private static final String text = "Когда я был молод, игры только появились и вся наша компания только и жила ими!";
-
     private static final String demoText = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно. Я очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. " +
             "В этом случае скорость прокрутки текста автоматически подстроиться под мою речь. А если я начну импровизировать," +
             " текст остановится и будет ждать пока я вернусь к чтению "; //.\\n\\n А еще, я теперь знаю, что инженеры разработали мобильный телесуфлёр, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных
