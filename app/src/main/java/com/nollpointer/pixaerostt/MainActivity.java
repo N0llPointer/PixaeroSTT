@@ -161,6 +161,8 @@ public class MainActivity extends AppCompatActivity {
                 if(controller == null){
                     controller = new ScrollViewController(scrollView,contentText,MainActivity.this);
 
+                    controller.startScroll();
+
                     Log.wtf(TAG,controller.getCurrentShowingSubString());
 
                     uniqueWords.addAll(TextToGrammar.getUniqueWordsList(demka));
@@ -175,8 +177,9 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.threshold:
                         seekbar.show(container);
                         break;
-                    case R.id.save_voice:
-                        askForAudioSave();
+                    case R.id.scroll_speed:
+                        //askForAudioSave();
+                        controller.increaseScrollDelta(2);
                         break;
                     case R.id.more_info:
                         dumpToLogEverything();
@@ -197,6 +200,12 @@ public class MainActivity extends AppCompatActivity {
         voiceRecognitionSoundEffect = MediaPlayer.create(this,R.raw.stairs);
 
         contentText.setText(demka);
+
+    }
+
+    private void changeScrollSpeed(){
+
+
 
     }
 
