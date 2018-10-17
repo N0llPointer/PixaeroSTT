@@ -9,6 +9,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -16,8 +17,12 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
@@ -43,7 +48,7 @@ import io.fabric.sdk.android.Fabric;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button recognizerButton;
+    private FloatingActionButton recognizerButton;
 
     private Dialog progressDialog;
 
@@ -87,6 +92,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         setContentView(R.layout.activity_main);
 
         Fabric.with(this, new Crashlytics());
@@ -130,6 +140,25 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+//        final GestureDetector gestureDetector = new GestureDetector(this,
+//                new GestureDetector.SimpleOnGestureListener(){
+//                    @Override
+//                    public boolean onSingleTapUp(MotionEvent e) {
+//                        return true;
+//                    }
+//                });
+//
+//        contentText.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//                if (gestureDetector.onTouchEvent(event)) {
+//                    if(toolbar.isShown())
+//                    return true;
+//                }
+//                return false;
+//            }
+//        });
+
 
         toolbar.inflateMenu(R.menu.main_menu);
 
@@ -161,11 +190,18 @@ public class MainActivity extends AppCompatActivity {
                 if(controller == null){
                     controller = new ScrollViewController(scrollView,contentText,MainActivity.this);
 
-                    controller.startScroll();
+                    List<String> list = controller.getWordsListFromScreen();
+                    for(String s: list){
+                        Log.e(TAG, "From screen: " + s );
+                    }
 
-                    Log.wtf(TAG,controller.getCurrentShowingSubString());
+                    //controller.startScroll();
+
+                    //Log.wtf(TAG,controller.getCurrentShowingSubString());
 
                     uniqueWords.addAll(TextToGrammar.getUniqueWordsList(demka));
+
+
                 }
             }
         });
@@ -179,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case R.id.scroll_speed:
                         //askForAudioSave();
-                        controller.increaseScrollDelta(2);
+                        //controller.increaseScrollDelta(2);
                         break;
                     case R.id.more_info:
                         dumpToLogEverything();
@@ -446,7 +482,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String demoText = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно. Я очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. " +
             "В этом случае скорость прокрутки текста автоматически подстроиться под мою речь. А если я начну импровизировать," +
             " текст остановится и будет ждать пока я вернусь к чтению "; //.\\n\\n А еще, я теперь знаю, что инженеры разработали мобильный телесуфлёр, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных
-    // телесуфлёров в мире! Больше информации о суфлёр я всегда могу найти на сайте \\n\\n " +
+    //      телесуфлёров в мире! Больше информации о суфлёр я всегда могу найти на сайте \\n\\n " +
 //            "Если у меня возникнут идеи как сделать приложение или суфлёр еще более удобным, я напишу ребятам из и они постараются воплотить это в ЖИЗНЬ. ";
 
     private static final String demka = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно.\n" +
