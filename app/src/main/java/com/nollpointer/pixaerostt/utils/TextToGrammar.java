@@ -138,7 +138,7 @@ public class TextToGrammar {
         return list;
     }
 
-    private static String deletePunctuationSigns(String text){
+    public static String deletePunctuationSigns(String text){
         StringBuilder builder = new StringBuilder(text);
         for(int i=0;i<builder.length();i++){
             char symbol = builder.charAt(i);

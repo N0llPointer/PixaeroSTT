@@ -5,7 +5,7 @@
     <item
         android:id="@+id/scroll_speed"
         android:title="Change Scroll Speed"
-        android:icon="@drawable/ic_scroll"
+        android:icon="@drawable/ic_pick_text"
         app:showAsAction="always"
         android:orderInCategory="1"
         />

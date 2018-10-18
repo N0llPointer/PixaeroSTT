@@ -7,6 +7,8 @@ import android.util.Log;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.nollpointer.pixaerostt.utils.TextToGrammar;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,19 +21,12 @@ public class ScrollViewController {
 
     private MainActivity activity;
 
-    //Mostly constants till the end of session
     private int lineCount;
 
     private int totalHeight;
     private int screenHeight;
 
-    private Runnable scrollRunnable;
-    private Handler handler;
-
     private boolean isPaused = false;
-
-    private int scrollDelta = 2;
-    private int delayTime = 100;
 
 
     public ScrollViewController(ScrollView scrollView,TextView textView,MainActivity activity) {
@@ -40,6 +35,9 @@ public class ScrollViewController {
         this.activity = activity;
 
         text = textView.getText().toString();
+        text = text.toLowerCase();
+        text = TextToGrammar.deletePunctuationSigns(text);
+        scrollView.scrollTo(0,0);
         initializeController();
         //prepareText();
         //initializeController();
@@ -69,13 +67,105 @@ public class ScrollViewController {
     }
 
 
-    private void threadPause(long millis){
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    public List<String> getWordsListFromScreen(){
+
+        Layout textViewLayout = contentText.getLayout();
+
+        ArrayList<String> words = new ArrayList<>();
+
+        int currentY = contentText.getScrollY();
+        int lineHeight = contentText.getLineHeight();
+        int currentEndY = currentY + screenHeight;
+
+        for(int i=currentY;i<currentEndY;i+=lineHeight){
+            int line = textViewLayout.getLineForVertical(i);
+            int start = textViewLayout.getLineStart(line);
+            int end = textViewLayout.getLineEnd(line);
+            String s = text.substring(start,end);
+            words.add(s);
         }
+
+        return words;
+
     }
+
+    public String processData(List<String> recognized){
+        if(recognized.size() == 0)
+            return null;
+
+        List<String> linesShown = getWordsListFromScreen();
+        int lineCountToScroll = 0;
+
+        String lastWordInLine = "";
+        int percentToScrollLine = 60;
+        int startIndex =0;
+        int endIndex = 0;
+
+        for(int i=0;i<linesShown.size();i++){
+            String line = linesShown.get(i);
+            //int length = line.length();
+
+            String words[] = line.split("\\s+");
+
+            double percent = 0;
+            int size = words.length;
+            String lastRecognizedWord = "";
+            //boolean shouldScroll = false;
+            for(int j=0;j<size;j++){
+
+                if(startIndex == 0){
+                    startIndex = recognized.indexOf(words[j]);
+                    //endIndex = recognized.indexOf(words[j]);
+                    lastRecognizedWord = words[j];
+                }
+
+                if(recognized.contains(words[j])) {
+                    int index = recognized.indexOf(words[j]);
+                    if(index >= startIndex) {
+                        percent++;
+                        lastRecognizedWord = words[j];
+                    }
+                }
+            }
+
+            percent = (percent/size)*100;
+            //shouldScroll = percent > 60;
+
+            //int delta = endIndex - startIndex;
+
+            if(percent > 60) {
+                lineCountToScroll = i + 1;
+                lastWordInLine = lastRecognizedWord;
+            }
+
+            startIndex = endIndex = 0;
+        }
+
+        if(lineCountToScroll != 0) {
+            scrollLines(lineCountToScroll, contentText.getLineHeight());
+            return lastWordInLine;
+        }else
+            return null;
+
+    }
+
+    public void scrollLines(final int lines,final int lineHeight){
+        new Handler().postDelayed(new Runnable() {
+                               @Override
+                               public void run() {
+                                   scrollView.smoothScrollTo(0, scrollView.getScrollY() + (lines-1) * lineHeight);
+                               }
+                           },400);
+        //ObjectAnimator.ofInt(scrollView, "scrollY",  scrollView.getScrollY() + lines*lineHeight).setDuration(100).start();
+    }
+
+//    private void threadPause(long millis){
+//        try {
+//            Thread.sleep(millis);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
 //    public String getCurrentShowingSubString(){
 //        Layout textViewLayout = contentText.getLayout();
@@ -92,20 +182,20 @@ public class ScrollViewController {
 //        return text.substring(start,end);
 //    }
 
-    /*private String getCurrentShowingReadngSubString(){
-        Layout textViewLayout = contentText.getLayout();
-
-        int currentY = contentText.getScrollY();
-        int currentEndY = currentY + scrollViewHeight/2;
-
-        int startLine = textViewLayout.getLineForVertical(currentY);
-        int endLine = textViewLayout.getLineForVertical(currentEndY);
-
-        int start = textViewLayout.getLineStart(startLine);
-        int end = textViewLayout.getLineEnd(endLine);
-
-        return text.substring(start,end);
-    }*/
+//    /*private String getCurrentShowingReadngSubString(){
+//        Layout textViewLayout = contentText.getLayout();
+//
+//        int currentY = contentText.getScrollY();
+//        int currentEndY = currentY + scrollViewHeight/2;
+//
+//        int startLine = textViewLayout.getLineForVertical(currentY);
+//        int endLine = textViewLayout.getLineForVertical(currentEndY);
+//
+//        int start = textViewLayout.getLineStart(startLine);
+//        int end = textViewLayout.getLineEnd(endLine);
+//
+//        return text.substring(start,end);
+//    }*/
 
 //    public void swipeUp(int swipe){
 //        contentText.scrollBy(0,swipe);
@@ -155,9 +245,7 @@ public class ScrollViewController {
 //
 //    }
 
-    public void processData(List<String> recognized,List<String> unique){
 
-    }
 
 //    public int testRecognizedWords(){
 //
@@ -182,32 +270,6 @@ public class ScrollViewController {
 //        return ((int) Math.ceil(percent * 100));
 //    }
 
-    public List<String> getWordsListFromScreen(){
 
-        Layout textViewLayout = contentText.getLayout();
-
-        ArrayList<String> words = new ArrayList<>();
-
-        int currentY = contentText.getScrollY();
-        int lineHeight = contentText.getLineHeight();
-        int currentEndY = currentY + screenHeight;
-
-        for(int i=currentY;i<currentEndY;i+=lineHeight){
-            int line = textViewLayout.getLineForVertical(i);
-            int start = textViewLayout.getLineStart(line);
-            int end = textViewLayout.getLineEnd(line);
-            String s = text.substring(start,end);
-            words.add(s);
-        }
-
-//        int startLine = textViewLayout.getLineForVertical(currentY);
-//        int endLine = textViewLayout.getLineForVertical(currentEndY);
-//
-//        int start = textViewLayout.getLineStart(startLine);
-//        int end = textViewLayout.getLineEnd(endLine);
-
-        return words;
-
-    }
 
 }

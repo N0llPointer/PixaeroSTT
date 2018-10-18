@@ -53,6 +53,10 @@ public class MainActivity extends AppCompatActivity {
     private Dialog progressDialog;
 
 
+    private String currentText = demka;
+    private boolean isRussian = true;
+
+
     private ScrollView scrollView;
     private TextView contentText;
     private CountDownView countDownView;
@@ -136,29 +140,11 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 seekBar.setVisibility(View.GONE);
                 toolbar.setSubtitle(null);
-                resetRecognizer();
+                resetRecognizer(currentText,isRussian);
             }
         });
 
-//        final GestureDetector gestureDetector = new GestureDetector(this,
-//                new GestureDetector.SimpleOnGestureListener(){
-//                    @Override
-//                    public boolean onSingleTapUp(MotionEvent e) {
-//                        return true;
-//                    }
-//                });
-//
-//        contentText.setOnTouchListener(new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//                if (gestureDetector.onTouchEvent(event)) {
-//                    if(toolbar.isShown())
-//                    return true;
-//                }
-//                return false;
-//            }
-//        });
-
+        recognizerButton.hide();
 
         toolbar.inflateMenu(R.menu.main_menu);
 
@@ -175,34 +161,18 @@ public class MainActivity extends AppCompatActivity {
                 if(isPocketOnGoing) {
                     recognizer.stop();
                     toolbar.setTitle(R.string.app_name);
+                    recognizerButton.setImageResource(R.drawable.ic_play);
                 }else {
-                    recognizer.startListening(MENU_SEARCH);
+                    controller = new ScrollViewController(scrollView,contentText,MainActivity.this);
+                    indexOfNewSequence = 0;
+                    voiceRecognitionSoundEffect.start();
                     toolbar.setTitle(R.string.listening);
                     countDownView.setVisibility(View.VISIBLE);
                     countDownView.startCountDown(3);
+                    recognizerButton.setImageResource(R.drawable.ic_pause);
+                    recognizer.startListening(MENU_SEARCH);
                 }
-                indexOfNewSequence = 0;
-                voiceRecognitionSoundEffect.start();
                 isPocketOnGoing = !isPocketOnGoing;
-
-
-
-                if(controller == null){
-                    controller = new ScrollViewController(scrollView,contentText,MainActivity.this);
-
-                    List<String> list = controller.getWordsListFromScreen();
-                    for(String s: list){
-                        Log.e(TAG, "From screen: " + s );
-                    }
-
-                    //controller.startScroll();
-
-                    //Log.wtf(TAG,controller.getCurrentShowingSubString());
-
-                    uniqueWords.addAll(TextToGrammar.getUniqueWordsList(demka));
-
-
-                }
             }
         });
 
@@ -214,6 +184,7 @@ public class MainActivity extends AppCompatActivity {
                         seekbar.show(container);
                         break;
                     case R.id.scroll_speed:
+                        pickText();
                         //askForAudioSave();
                         //controller.increaseScrollDelta(2);
                         break;
@@ -225,13 +196,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//        builder.setView(R.layout.progress_dialog);
-//        builder.setCancelable(false);
-//        progressDialog = builder.create();
-//        progressDialog.show();
-
-        runRecognizerSetup();
+        runRecognizerSetup(demka,true);
 
         voiceRecognitionSoundEffect = MediaPlayer.create(this,R.raw.stairs);
 
@@ -239,11 +204,58 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void changeScrollSpeed(){
+    private void pickText(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setPositiveButton("Ок", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                resetRecognizer(currentText,isRussian);
+            }
+        });
+        builder.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        int which = 0;
 
+        switch (currentText){
+            case demka:
+                which = 0;
+                break;
+            case englishText:
+                which = 1;
+                break;
+            case testText:
+                which = 2;
+                break;
+        }
 
+        builder.setSingleChoiceItems(R.array.text_to_pick, which, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which){
+                    case 0:
+                        currentText = demka;
+                        isRussian = true;
+                        break;
+                    case 1:
+                        currentText = englishText;
+                        isRussian = false;
+                        break;
+                    case 2:
+                        currentText = testText;
+                        isRussian = true;
+                        break;
+                }
 
+            }
+        });
+        builder.create().show();
     }
+
 
     private void dumpToLogEverything(){
         StringBuilder recognized = new StringBuilder();
@@ -262,11 +274,13 @@ public class MainActivity extends AppCompatActivity {
         Log.wtf(DUMP,"Unique: " + unique.toString());
     }
 
-    private void resetRecognizer(){
+    private void resetRecognizer(String text, boolean isRussian){
         recognizer.stop();
         recognizer.shutdown();
-        runRecognizerSetup();
-        recognizerButton.setEnabled(false);
+        contentText.setText(text);
+        controller = new ScrollViewController(scrollView,contentText,this);
+        runRecognizerSetup(text,isRussian);
+        recognizerButton.hide();
     }
 
     private void askForAudioSave(){
@@ -303,14 +317,14 @@ public class MainActivity extends AppCompatActivity {
 
         if(requestCode == 1){
             if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                runRecognizerSetup();
+                runRecognizerSetup(currentText,isRussian);
             else
                 finish();
         }
     }
 
-    private void runRecognizerSetup(){
-        new RecognizerSetup(this).execute();
+    private void runRecognizerSetup(String text, boolean isRussian){
+        new RecognizerSetup(this,text,isRussian).execute();
     }
 
     private File createAudioSessionFolder(){
@@ -323,31 +337,37 @@ public class MainActivity extends AppCompatActivity {
         return file;
     }
 
-    private void setupRecognizer(File dir) {
+    private void setupRecognizer(File dir, String text, boolean isRussian) {
         File audioSessionFolder = createAudioSessionFolder();
         try {
-            recognizer = SpeechRecognizerSetup.defaultSetup()
-                    .setAcousticModel(new File(dir, "ru-ptm"))
-                    .setDictionary(new File(dir, "ru.dic"))
-                    .setKeywordThreshold((float) Math.pow(1,-threshold))
-                    .setRawLogDir(audioSessionFolder)
+            SpeechRecognizerSetup setup = SpeechRecognizerSetup.defaultSetup();
+
+            if(isRussian) {
+                setup.setAcousticModel(new File(dir, "ru-ptm"))
+                        .setDictionary(new File(dir, "ru.dic"));
+            }else {
+                setup.setAcousticModel(new File(dir, "en-us-ptm"))
+                        .setDictionary(new File(dir, "cmudict-en-us.dict"));
+            }
+
+                    setup.setKeywordThreshold((float) Math.pow(1,-threshold))
+                        .setRawLogDir(audioSessionFolder);
 
                     //.setBoolean("-remove_noise", false)
 
-                    .getRecognizer();
+                    recognizer = setup.getRecognizer();
         }catch (Exception e){
             Log.wtf(TAG,e);
         }
 
         recognizer.addListener(new recognizerListener());
 
-        TextToGrammar.checkIfWordsAreInDictionary(recognizer.getDecoder(),demka);
+        TextToGrammar.checkIfWordsAreInDictionary(recognizer.getDecoder(),text);
 
-        String menuGrammar = TextToGrammar.convertTextToJSGF(demka,recognizer.getDecoder());
+        String menuGrammar = TextToGrammar.convertTextToJSGF(text,recognizer.getDecoder());
         File file = TextToGrammar.saveJSFGToFile("test",menuGrammar,dir);
 
         recognizer.addGrammarSearch(MENU_SEARCH,file);
-
 
         //progressDialog.dismiss();
     }
@@ -383,12 +403,6 @@ public class MainActivity extends AppCompatActivity {
         double percent = recognized;
         percent /= size;
         Log.wtf(TAG,recognized + " " + size + " " + percent);
-        //if(percent > 0.5){
-        //    controller.swipeUp();
-        //    uniqueWords.clear();
-        //    uniqueWords.addAll(TextToGrammar.getUniqueWordsList(controller.getCurrentShowingSubString()));
-        //}
-
         Log.wtf(TAG,Double.toString(Math.ceil(percent * 100)));
         progressBar.setProgress(((int) Math.ceil(percent * 100)));
 
@@ -417,12 +431,17 @@ public class MainActivity extends AppCompatActivity {
             recognizedWords.clear();
             recognizedWords.addAll(list);
 
-            String recd = "";
-            for(String s: list)
-                recd += s + " | ";
 
-            partialResultsView.setText(text.substring(indexOfNewSequence) + "\n---\n" + recd);
-            testRecognizedWords();
+
+            String str = controller.processData(recognizedWords);
+            if(str != null)
+                indexOfNewSequence += text.lastIndexOf(str);
+
+//            String recd = "";
+//            for(String s: list)
+//                recd += s + " | ";
+            partialResultsView.setText(text.substring(indexOfNewSequence));
+            //testRecognizedWords();
 
             //if(testRecognizedWords())
             //    indexOfNewSequence = text.length() - 1;
@@ -449,9 +468,13 @@ public class MainActivity extends AppCompatActivity {
     class RecognizerSetup extends AsyncTask<Void,Void,Exception>{
 
         AppCompatActivity context;
+        String text;
+        boolean isRussian = true;
 
-        RecognizerSetup(AppCompatActivity context) {
+        RecognizerSetup(AppCompatActivity context, String text, boolean isRussian) {
             this.context = context;
+            this.text = text;
+            this.isRussian = isRussian;
         }
 
         @Override
@@ -461,7 +484,7 @@ public class MainActivity extends AppCompatActivity {
                 Snackbar.make(context.findViewById(R.id.container), "Exception with Voice", Snackbar.LENGTH_SHORT).show();
             }else {
                 toolbar.setTitle(R.string.app_name);
-                recognizerButton.setEnabled(true);
+                recognizerButton.show();
                 Toast.makeText(context,"Threshold = " + threshold,Toast.LENGTH_SHORT).show();
             }
         }
@@ -471,7 +494,7 @@ public class MainActivity extends AppCompatActivity {
             try{
                 Assets assets = new Assets(context);
                 File assetsDir = assets.syncAssets();
-                setupRecognizer(assetsDir);
+                setupRecognizer(assetsDir,text,isRussian);
             }catch (Exception e){
                 return e;
             }
@@ -479,11 +502,6 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
     }
-    private static final String demoText = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно. Я очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. " +
-            "В этом случае скорость прокрутки текста автоматически подстроиться под мою речь. А если я начну импровизировать," +
-            " текст остановится и будет ждать пока я вернусь к чтению "; //.\\n\\n А еще, я теперь знаю, что инженеры разработали мобильный телесуфлёр, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных
-    //      телесуфлёров в мире! Больше информации о суфлёр я всегда могу найти на сайте \\n\\n " +
-//            "Если у меня возникнут идеи как сделать приложение или суфлёр еще более удобным, я напишу ребятам из и они постараются воплотить это в ЖИЗНЬ. ";
 
     private static final String demka = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно.\n" +
             "\n" +
@@ -493,7 +511,7 @@ public class MainActivity extends AppCompatActivity {
             "\n" +
             "Если у меня возникнут идеи как сделать приложение или суфлер еще более удобным, я напишу ребятам из PIXAERO и они постараются воплотить это в жизнь!";
 
-    private static final String currentText = "А сейчас парень и в каком формате вам не надо было дома остаться без НДС с другой компанией и все что нужно для начала работы и в конце концов это не важно что бы вы прислать фото не очень хорошо что у вас он есть у вас есть возможность и стоимость по договору подряда и все это время в пути в том же духе в не знаю как это развивать и все же я могу ему не хватает в универ " +
+    private static final String testText = "А сейчас парень и в каком формате вам не надо было дома остаться без НДС с другой компанией и все что нужно для начала работы и в конце концов это не важно что бы вы прислать фото не очень хорошо что у вас он есть у вас есть возможность и стоимость по договору подряда и все это время в пути в том же духе в не знаю как это развивать и все же я могу ему не хватает в универ " +
             "новая и не было бы хорошо с вами по Скайпу и не было оповещения и не было оповещения и трансляции на 50 не оч хорошо в ближайшее к нам на склад не знаю почему не работает и в конце недели или на группу подписался в том же месте не было бы здорово встретиться в четверг в том же году в универ новая в том числе на работе не было оповещения от меня и у него огромная просьба к вам не нужно для того настроя не оч " +
             "охота за информацию о вашем заказе в универ новая и новейшая технология и не было в наличии есть все необходимые данные не знаю что делать будешь уже в кровати в том же месте решим как раз в месяц в США от плиты взять в аренду в том же месте и в этом году мы не сможем получить от вас было получено письмо не является обязательным является одним или двумя руками не оч удобно и не только от меня пойдем к сожалению" +
             " в связи в случае необходимости готов работать по договору займа в универ новая в том числе и по проектам и в конце недели и до конца дня пришлю в ближайшее будущее России по республике Казахстан Алматы в универ и в конце есть в наличие и цену не знаю почему так что я уже хочу полировать в универ новая и не только" +
