@@ -153,7 +153,7 @@ public class ScrollViewController {
         new Handler().postDelayed(new Runnable() {
                                @Override
                                public void run() {
-                                   scrollView.smoothScrollTo(0, scrollView.getScrollY() + (lines-1) * lineHeight);
+                                   scrollView.smoothScrollTo(0, scrollView.getScrollY() + (lines-2) * lineHeight);
                                }
                            },400);
         //ObjectAnimator.ofInt(scrollView, "scrollY",  scrollView.getScrollY() + lines*lineHeight).setDuration(100).start();

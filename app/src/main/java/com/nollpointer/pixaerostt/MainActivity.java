@@ -435,7 +435,7 @@ public class MainActivity extends AppCompatActivity {
 
             String str = controller.processData(recognizedWords);
             if(str != null)
-                indexOfNewSequence += text.lastIndexOf(str);
+                indexOfNewSequence = text.lastIndexOf(str);
 
 //            String recd = "";
 //            for(String s: list)
