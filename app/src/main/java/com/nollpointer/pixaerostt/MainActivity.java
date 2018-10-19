@@ -17,13 +17,10 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
@@ -50,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
     private FloatingActionButton recognizerButton;
 
-    private Dialog progressDialog;
+    //private Dialog progressDialog;
 
 
     private String currentText = demka;
@@ -91,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
     private int indexOfNewSequence = 0;
 
     private int threshold = 7;
+    private StringBuilder recognized;
 
 
     @Override
@@ -181,6 +179,7 @@ public class MainActivity extends AppCompatActivity {
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()){
                     case R.id.threshold:
+                        seekbar.setProgress(threshold);
                         seekbar.show(container);
                         break;
                     case R.id.scroll_speed:
@@ -259,6 +258,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void dumpToLogEverything(){
         StringBuilder recognized = new StringBuilder();
+
         StringBuilder unique = new StringBuilder();
         for(String s:recognizedWords){
             recognized.append(s);
@@ -283,33 +283,7 @@ public class MainActivity extends AppCompatActivity {
         recognizerButton.hide();
     }
 
-    private void askForAudioSave(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setPositiveButton("Ок", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                boolean isCreated = createFolderForRawAudio();
-                Snackbar.make(container,"Создано: " + isCreated,Snackbar.LENGTH_SHORT).show();
-                dialog.dismiss();
-            }
-        });
-        builder.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        builder.setTitle("Создание папки");
-        builder.setMessage("Вы хотите сохранять аудиозаписи суфлера?");
-        builder.create().show();
-    }
 
-    private boolean createFolderForRawAudio(){
-        String folder_main = "Pixaero/Audio";
-
-        File file = new File(Environment.getExternalStorageDirectory(), folder_main);
-        return file.mkdirs();
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -332,9 +306,12 @@ public class MainActivity extends AppCompatActivity {
         String sessionFolderName = Long.toHexString(time);
 
         File file = new File(Environment.getExternalStorageDirectory(),AUDIO_FOLDER + "/" + sessionFolderName);
-        file.mkdir();
+        boolean isCreated = file.mkdirs();
 
-        return file;
+        if(isCreated)
+            return file;
+        else
+            return null;
     }
 
     private void setupRecognizer(File dir, String text, boolean isRussian) {
@@ -350,8 +327,9 @@ public class MainActivity extends AppCompatActivity {
                         .setDictionary(new File(dir, "cmudict-en-us.dict"));
             }
 
-                    setup.setKeywordThreshold((float) Math.pow(1,-threshold))
-                        .setRawLogDir(audioSessionFolder);
+                    setup.setKeywordThreshold((float) Math.pow(1,-threshold));
+            if(audioSessionFolder != null)
+                        setup.setRawLogDir(audioSessionFolder);
 
                     //.setBoolean("-remove_noise", false)
 
@@ -392,23 +370,6 @@ public class MainActivity extends AppCompatActivity {
         toolbar.setTitle(R.string.app_name);
     }
 
-    public boolean testRecognizedWords(){
-
-        int size = uniqueWords.size();
-        int recognized = 0;
-        for(String s:recognizedWords){
-            if(uniqueWords.contains(s))
-                recognized++;
-        }
-        double percent = recognized;
-        percent /= size;
-        Log.wtf(TAG,recognized + " " + size + " " + percent);
-        Log.wtf(TAG,Double.toString(Math.ceil(percent * 100)));
-        progressBar.setProgress(((int) Math.ceil(percent * 100)));
-
-        return percent > 0.5;
-    }
-
     class recognizerListener implements edu.cmu.pocketsphinx.RecognitionListener{
         @Override
         public void onBeginningOfSpeech() {
@@ -430,7 +391,6 @@ public class MainActivity extends AppCompatActivity {
             List<String> list = TextToGrammar.getUniqueWordsWithoutPunctuation(text.substring(indexOfNewSequence));
             recognizedWords.clear();
             recognizedWords.addAll(list);
-
 
 
             String str = controller.processData(recognizedWords);
@@ -469,7 +429,7 @@ public class MainActivity extends AppCompatActivity {
 
         AppCompatActivity context;
         String text;
-        boolean isRussian = true;
+        boolean isRussian;
 
         RecognizerSetup(AppCompatActivity context, String text, boolean isRussian) {
             this.context = context;
@@ -517,6 +477,80 @@ public class MainActivity extends AppCompatActivity {
             " в связи в случае необходимости готов работать по договору займа в универ новая в том числе и по проектам и в конце недели и до конца дня пришлю в ближайшее будущее России по республике Казахстан Алматы в универ и в конце есть в наличие и цену не знаю почему так что я уже хочу полировать в универ новая и не только" +
             " в том числе в том же месте не было оповещения о нем не было бы хорошо чтобы за что я уже забыл про меня есть план в приложении во вкладке не так давно я тоже так что не надо будет в понедельник после 3 курс по дифурам экзамен на индивидуальный предприниматель в том числе в не очень охота и предоставление информации в соответствии со строками в универ и не понял о чём речь в данном этапе это сообщение";
 
-    private static final String englishText = "hello guys what is up boys well basically everything is pretty shitty due to some reasons like low quality of voice recognition. As you can understand this is pretty shit and I do not really know what to do. each time i think about it i just want ot stop and go out but soon i will get salary " +
-            "that's why i am still here. damn so much text this is terrific and pretty sad because i am just repeating myself which is not that great. Also i will meet creator of current order and he would love to see real results which i can't show right now due to very low stupid voice recognition system called fucking sphinx gosh when this will end DAMN.";
+    private static final String englishText = "Students compile a collection of their texts in a variety of genres over time and choose two pieces to present for summative assessment. In the majority of cases, the work in the student’s collection will arise from normal classwork, as the examples below illustrate. \n" +
+            " \n" +
+            "The annotations capture insights by the student’s teacher, using the features of quality, with a view to establishing the level of achievement the text reflects. The purpose of the annotations is to make the teacher's thinking visible. The annotations were confirmed by the Quality Assurance group, consisting of practicing English teachers and representatives of the Inspectorate, the SEC and JCT. \n" +
+            " \n" +
+            "The purpose of these examples is to support teachers' professional development. They are not to be used for any other purpose. More examples will be added over time.";
+
+
+
+//    public boolean testRecognizedWords(){
+//
+//        int size = uniqueWords.size();
+//        int recognized = 0;
+//        for(String s:recognizedWords){
+//            if(uniqueWords.contains(s))
+//                recognized++;
+//        }
+//        double percent = recognized;
+//        percent /= size;
+//        Log.wtf(TAG,recognized + " " + size + " " + percent);
+//        Log.wtf(TAG,Double.toString(Math.ceil(percent * 100)));
+//        progressBar.setProgress(((int) Math.ceil(percent * 100)));
+//
+//        return percent > 0.5;
+//    }
+
+
+//    private void askForAudioSave(){
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        builder.setPositiveButton("Ок", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                boolean isCreated = createFolderForRawAudio();
+//                Snackbar.make(container,"Создано: " + isCreated,Snackbar.LENGTH_SHORT).show();
+//                dialog.dismiss();
+//            }
+//        });
+//        builder.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                dialog.dismiss();
+//            }
+//        });
+//        builder.setTitle("Создание папки");
+//        builder.setMessage("Вы хотите сохранять аудиозаписи суфлера?");
+//        builder.create().show();
+//    }
+
+
+//    private void askForAudioSave(){
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        builder.setPositiveButton("Ок", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                boolean isCreated = createFolderForRawAudio();
+//                Snackbar.make(container,"Создано: " + isCreated,Snackbar.LENGTH_SHORT).show();
+//                dialog.dismiss();
+//            }
+//        });
+//        builder.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                dialog.dismiss();
+//            }
+//        });
+//        builder.setTitle("Создание папки");
+//        builder.setMessage("Вы хотите сохранять аудиозаписи суфлера?");
+//        builder.create().show();
+//    }
+
+//    private boolean createFolderForRawAudio(){
+//        String folder_main = "Pixaero/Audio";
+//
+//        File file = new File(Environment.getExternalStorageDirectory(), folder_main);
+//        return file.mkdirs();
+//    }
+
 }

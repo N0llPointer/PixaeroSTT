@@ -20,8 +20,7 @@ public class MenuSeekBar extends AppCompatSeekBar {
         setThumb(context.getResources().getDrawable(R.drawable.seekbar_thumb));
 
         setMax(40);
-        setMin(1);
-        setProgress(7);
+        //setProgress(7);
         setBackground(context.getResources().getDrawable(R.drawable.seekbar_background));
         setVisibility(GONE);
         //setRotation(270);
@@ -29,10 +28,8 @@ public class MenuSeekBar extends AppCompatSeekBar {
     }
 
     public void show(View target){
-        int[] coords = new int[2];
-        target.getLocationOnScreen(coords);
-        //setX(coords[0]);
         setY(target.getHeight()/2);
         setVisibility(VISIBLE);
     }
+
 }

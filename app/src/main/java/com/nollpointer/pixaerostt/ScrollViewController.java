@@ -1,7 +1,6 @@
 package com.nollpointer.pixaerostt;
 
-import android.animation.ObjectAnimator;
-import android.os.Handler;
+import android.os.CountDownTimer;
 import android.text.Layout;
 import android.util.Log;
 import android.widget.ScrollView;
@@ -39,8 +38,6 @@ public class ScrollViewController {
         text = TextToGrammar.deletePunctuationSigns(text);
         scrollView.scrollTo(0,0);
         initializeController();
-        //prepareText();
-        //initializeController();
     }
 
     private void initializeController(){
@@ -50,22 +47,7 @@ public class ScrollViewController {
         totalHeight = textViewLayout.getHeight();
         screenHeight = scrollView.getHeight();
 
-        //handler = new Handler();
-
     }
-
-    private void prepareText(){
-        int count = screenHeight/(totalHeight/lineCount) + 1;
-        for(int i=0;i<count;i++){
-            text = "\n" + text;
-        }
-        for(int i=0;i<count;i++){
-            text = text + "\n";
-        }
-
-        contentText.setText(text);
-    }
-
 
     public List<String> getWordsListFromScreen(){
 
@@ -149,15 +131,31 @@ public class ScrollViewController {
 
     }
 
-    public void scrollLines(final int lines,final int lineHeight){
-        new Handler().postDelayed(new Runnable() {
-                               @Override
-                               public void run() {
-                                   scrollView.smoothScrollTo(0, scrollView.getScrollY() + (lines-2) * lineHeight);
-                               }
-                           },400);
-        //ObjectAnimator.ofInt(scrollView, "scrollY",  scrollView.getScrollY() + lines*lineHeight).setDuration(100).start();
+    private void scrollLines(final int lines,final int lineHeight) {
+        final int currentScroll = scrollView.getScrollY();
+        final int scrollTo = currentScroll + lineHeight * (lines - 2);
+
+        scrollView.scrollTo(0,scrollTo);
+
+//        new CountDownTimer(lineHeight * (lines - 1), 20) {
+//
+//            public void onTick(long millisUntilFinished) {
+//                scrollView.scrollTo(0, (int) (scrollTo - millisUntilFinished));
+//            }
+//
+//            public void onFinish() {
+//                Log.e(TAG, "Scrolled finished");
+//            }
+//        }.start();
+
     }
+//        new Handler().postDelayed(new Runnable() {
+//                               @Override
+//                               public void run() {
+//                                   scrollView.smoothScrollTo(0, scrollView.getScrollY() + (lines-2) * lineHeight);
+//                               }
+//                           },400);
+        //ObjectAnimator.ofInt(scrollView, "scrollY",  scrollView.getScrollY() + lines*lineHeight).setDuration(100).start();
 
 //    private void threadPause(long millis){
 //        try {
@@ -269,7 +267,17 @@ public class ScrollViewController {
 //
 //        return ((int) Math.ceil(percent * 100));
 //    }
-
-
+//
+//    private void prepareText(){
+//        int count = screenHeight/(totalHeight/lineCount) + 1;
+//        for(int i=0;i<count;i++){
+//            text = "\n" + text;
+//        }
+//        for(int i=0;i<count;i++){
+//            text = text + "\n";
+//        }
+//
+//        contentText.setText(text);
+//    }
 
 }
