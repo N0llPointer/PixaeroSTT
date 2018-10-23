@@ -75,7 +75,6 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         Fabric.with(this, new Crashlytics());
 
 
-
         setContentView(R.layout.activity_google_voice_recognition);
         recognizeButton = findViewById(R.id.recognize_button);
         languageButton = findViewById(R.id.language_button);
@@ -102,26 +101,26 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         contentText.setText(demo);
         contentText.setTextSize(textSize);
 
-        controller = new ScrollViewController(scrollView,contentText,this);
+        controller = new ScrollViewController(scrollView, contentText);
 
         //recognizedText.setText("Нажмите Recognize и начните говорить");
     }
 
-    private void initializeToolbar(){
+    private void initializeToolbar() {
         toolbar.inflateMenu(R.menu.recognizer_toolbar_menu);
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
 
-                switch (item.getItemId()){
+                switch (item.getItemId()) {
                     case R.id.font_up:
-                        textSize +=2;
+                        textSize += 2;
                         break;
                     case R.id.font_down:
-                        textSize -=2;
+                        textSize -= 2;
                         break;
                     case R.id.more_info:
-                        InfoDialog.getInstance(partialResultsString).show(getSupportFragmentManager(),TAG);
+                        InfoDialog.getInstance(partialResultsString).show(getSupportFragmentManager(), TAG);
                         break;
                 }
 
@@ -132,7 +131,7 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         });
     }
 
-    private void initializeRecognizer(){
+    private void initializeRecognizer() {
         recognizer = SpeechRecognizer.createSpeechRecognizer(this);
         recognizer.setRecognitionListener(new SpeechListener());
         recognizeButton.setOnClickListener(new View.OnClickListener() {
@@ -164,7 +163,7 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         recognizer.stopListening();
                         recognizerIntent = createIntentForRecognizer(languages.get(which));
-                        Log.wtf(TAG,languages.get(which));
+                        Log.wtf(TAG, languages.get(which));
                         dialog.dismiss();
                     }
                 });
@@ -182,25 +181,27 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         });
     }
 
-    public Intent createIntentForRecognizer(String language){
+    public Intent createIntentForRecognizer(String language) {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,"com.nollpointer.pixaerostt");
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, "com.nollpointer.pixaerostt");
         intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
 
         // Выставление минимального времени для распознователя
-        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS,25 * 1000);
-        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,25 * 1000);
-        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS,25 * 1000);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 25 * 1000);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 25 * 1000);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 25 * 1000);
         //intent.putExtra(RecognizerIntent.EXTRA_RESULTS_PENDINGINTENT,true);
 
-        if(Build.VERSION.SDK_INT >= 23)
-            intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE,true);
+        intent.putExtra("android.speech.extra.DICTATION_MODE", true);
 
-        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,3);
+        if (Build.VERSION.SDK_INT >= 23)
+            intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
 
-        if(language != null)
-            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,language);
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
+
+        if (language != null)
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, language);
 
         return intent;
     }
@@ -213,9 +214,9 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         Log.e(TAG, "onActivityResult: " + d);
     }
 
-    public void searchForLanguages(){
+    public void searchForLanguages() {
         Intent details = RecognizerIntent.getVoiceDetailsIntent(this);
-        sendOrderedBroadcast(details,null,new LanguageDetailsChecker(),null, Activity.RESULT_OK,null,null);
+        sendOrderedBroadcast(details, null, new LanguageDetailsChecker(), null, Activity.RESULT_OK, null, null);
     }
 
     public boolean showInstallOfflineVoiceFiles() {
@@ -232,7 +233,8 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         try {
             startActivity(intent);
             return true;
-        } catch (final Exception e) {}
+        } catch (final Exception e) {
+        }
 
         return false;
     }
@@ -241,34 +243,34 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if(requestCode == 1){
-            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+        if (requestCode == 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                 initializeRecognizer();
             else
                 finish();
         }
     }
 
-    class LanguageDetailsChecker extends BroadcastReceiver{
+    class LanguageDetailsChecker extends BroadcastReceiver {
         List<String> supportedLanguages;
 
         @Override
         public void onReceive(Context context, Intent intent) {
             Bundle results = getResultExtras(true);
-            if(results.containsKey(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES)){
+            if (results.containsKey(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES)) {
                 supportedLanguages = results.getStringArrayList(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES);
-                for(String s: supportedLanguages)
-                    Log.wtf(TAG,s);
+                for (String s : supportedLanguages)
+                    Log.wtf(TAG, s);
                 languages = supportedLanguages;
             }
-            if(results.containsKey(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE)) {
+            if (results.containsKey(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE)) {
                 String prefs = results.getString(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE);
-                Log.wtf("Preferences: ",prefs);
+                Log.wtf("Preferences: ", prefs);
             }
         }
     }
 
-    class SpeechListener implements RecognitionListener{
+    class SpeechListener implements RecognitionListener {
         @Override
         public void onReadyForSpeech(Bundle params) {
 
@@ -303,22 +305,23 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         @Override
         public void onResults(Bundle results) {
             String text = "null";
-            if(results.containsKey(SpeechRecognizer.RESULTS_RECOGNITION)){
+            if (results.containsKey(SpeechRecognizer.RESULTS_RECOGNITION)) {
                 ArrayList<String> data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 text = data.get(0);
             }
-            Log.e(TAG ,text);
+            Log.e(TAG, text);
             toolbar.setTitle("Pixaero");
         }
 
         @Override
         public void onPartialResults(Bundle partialResults) {
-            String text = "null";
-            if(partialResults.containsKey(SpeechRecognizer.RESULTS_RECOGNITION)){
+            if (partialResults.containsKey(SpeechRecognizer.RESULTS_RECOGNITION)) {
                 ArrayList<String> data = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 partialResultsString = data.get(0);
             }
             controller.processDataV2(partialResultsString);
+
+            Log.e(TAG, "onPartialResults: " + partialResultsString );
             //recognizedText.setText(text);
         }
 

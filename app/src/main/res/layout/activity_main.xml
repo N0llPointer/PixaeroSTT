@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_gravity="center"
-    android:id="@+id/container">
+    android:layout_gravity="center">
 
-    <LinearLayout android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_gravity="center">
+        android:layout_gravity="center"
+        android:orientation="vertical">
 
         <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?android:actionBarSize"
-            android:id="@+id/toolbar"
             android:background="@color/colorPrimary"
+            app:subtitleTextColor="#d1d1d1"
             app:title="@string/initialize"
-            app:titleTextColor="@android:color/white"
-            app:subtitleTextColor="#d1d1d1"/>
+            app:titleTextColor="@android:color/white" />
 
         <ProgressBar
-            android:layout_width="match_parent"
-            android:layout_height="2dp"
             android:id="@+id/progressbar"
             style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-            android:max="100"/>
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:max="100" />
 
 
         <ScrollView
+            android:id="@+id/scrollView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:id="@+id/scrollView">
+            android:layout_weight="1">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -41,55 +41,54 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/contentText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:id="@+id/contentText"
-                    android:textAppearance="?android:textAppearanceLarge"
-                    android:textSize="45sp"
                     android:text="@string/test_text"
-                    android:textIsSelectable="true" />
+                    android:textAppearance="?android:textAppearanceLarge"
+                    android:textIsSelectable="true"
+                    android:textSize="45sp" />
 
 
             </LinearLayout>
-
 
 
         </ScrollView>
 
 
         <!--<LinearLayout-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_gravity="bottom"-->
-            <!--android:gravity="center"-->
-            <!--android:orientation="horizontal">-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_gravity="bottom"-->
+        <!--android:gravity="center"-->
+        <!--android:orientation="horizontal">-->
 
-            <!--<Button-->
-                <!--android:foreground="?android:attr/selectableItemBackground"-->
-                <!--android:enabled="false"-->
-                <!--style="?android:attr/buttonBarStyle"-->
-                <!--android:background="@android:color/white"-->
-                <!--android:paddingStart="10dp"-->
-                <!--android:paddingEnd="10dp"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:text="@string/recognize"-->
-                <!--android:textSize="25sp"-->
-                <!--android:layout_gravity="center_horizontal"/>-->
+        <!--<Button-->
+        <!--android:foreground="?android:attr/selectableItemBackground"-->
+        <!--android:enabled="false"-->
+        <!--style="?android:attr/buttonBarStyle"-->
+        <!--android:background="@android:color/white"-->
+        <!--android:paddingStart="10dp"-->
+        <!--android:paddingEnd="10dp"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="@string/recognize"-->
+        <!--android:textSize="25sp"-->
+        <!--android:layout_gravity="center_horizontal"/>-->
 
         <!--</LinearLayout>-->
 
     </LinearLayout>
 
     <android.support.design.widget.FloatingActionButton
+        android:id="@+id/button_voice_recognizer_sphynx"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:fabSize="mini"
-        android:layout_margin="5dp"
-        android:id="@+id/button_voice_recognizer_sphynx"
         android:layout_gravity="bottom|end"
+        android:layout_margin="5dp"
         android:src="@drawable/ic_play"
-        app:borderWidth="0dp"/>
+        app:borderWidth="0dp"
+        app:fabSize="mini" />
 
 
 </FrameLayout>

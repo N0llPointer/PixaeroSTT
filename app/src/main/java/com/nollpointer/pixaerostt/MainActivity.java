@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         container = findViewById(R.id.container);
         toolbar = findViewById(R.id.toolbar);
         progressBar = findViewById(R.id.progressbar);
-        
+
         progressBar.setProgress(0);
 
         countDownView = new CountDownView(this);
@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 seekBar.setVisibility(View.GONE);
                 toolbar.setSubtitle(null);
-                resetRecognizer(currentText,isRussian);
+                resetRecognizer(currentText, isRussian);
             }
         });
 
@@ -156,12 +156,12 @@ public class MainActivity extends AppCompatActivity {
         recognizerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(isPocketOnGoing) {
+                if (isPocketOnGoing) {
                     recognizer.stop();
                     toolbar.setTitle(R.string.app_name);
                     recognizerButton.setImageResource(R.drawable.ic_play);
-                }else {
-                    controller = new ScrollViewController(scrollView,contentText,MainActivity.this);
+                } else {
+                    controller = new ScrollViewController(scrollView, contentText);
                     indexOfNewSequence = 0;
                     voiceRecognitionSoundEffect.start();
                     toolbar.setTitle(R.string.listening);
@@ -177,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()){
+                switch (item.getItemId()) {
                     case R.id.threshold:
                         seekbar.setProgress(threshold);
                         seekbar.show(container);
@@ -195,21 +195,21 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        runRecognizerSetup(demka,true);
+        runRecognizerSetup(demka, true);
 
-        voiceRecognitionSoundEffect = MediaPlayer.create(this,R.raw.stairs);
+        voiceRecognitionSoundEffect = MediaPlayer.create(this, R.raw.stairs);
 
         contentText.setText(demka);
 
     }
 
-    private void pickText(){
+    private void pickText() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setPositiveButton("Ок", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-                resetRecognizer(currentText,isRussian);
+                resetRecognizer(currentText, isRussian);
             }
         });
         builder.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
@@ -220,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
         });
         int which = 0;
 
-        switch (currentText){
+        switch (currentText) {
             case demka:
                 which = 0;
                 break;
@@ -235,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
         builder.setSingleChoiceItems(R.array.text_to_pick, which, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                switch (which){
+                switch (which) {
                     case 0:
                         currentText = demka;
                         isRussian = true;
@@ -256,59 +256,58 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void dumpToLogEverything(){
+    private void dumpToLogEverything() {
         StringBuilder recognized = new StringBuilder();
 
         StringBuilder unique = new StringBuilder();
-        for(String s:recognizedWords){
+        for (String s : recognizedWords) {
             recognized.append(s);
             recognized.append(" | ");
         }
 
-        for(String s: uniqueWords){
+        for (String s : uniqueWords) {
             unique.append(s);
             unique.append(" | ");
         }
 
-        Log.wtf(DUMP,"Recognized: " + recognized.toString());
-        Log.wtf(DUMP,"Unique: " + unique.toString());
+        Log.wtf(DUMP, "Recognized: " + recognized.toString());
+        Log.wtf(DUMP, "Unique: " + unique.toString());
     }
 
-    private void resetRecognizer(String text, boolean isRussian){
+    private void resetRecognizer(String text, boolean isRussian) {
         recognizer.stop();
         recognizer.shutdown();
         contentText.setText(text);
-        controller = new ScrollViewController(scrollView,contentText,this);
-        runRecognizerSetup(text,isRussian);
+        controller = new ScrollViewController(scrollView, contentText);
+        runRecognizerSetup(text, isRussian);
         recognizerButton.hide();
     }
-
 
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if(requestCode == 1){
-            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                runRecognizerSetup(currentText,isRussian);
+        if (requestCode == 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                runRecognizerSetup(currentText, isRussian);
             else
                 finish();
         }
     }
 
-    private void runRecognizerSetup(String text, boolean isRussian){
-        new RecognizerSetup(this,text,isRussian).execute();
+    private void runRecognizerSetup(String text, boolean isRussian) {
+        new RecognizerSetup(this, text, isRussian).execute();
     }
 
-    private File createAudioSessionFolder(){
+    private File createAudioSessionFolder() {
         long time = System.currentTimeMillis();
         String sessionFolderName = Long.toHexString(time);
 
-        File file = new File(Environment.getExternalStorageDirectory(),AUDIO_FOLDER + "/" + sessionFolderName);
+        File file = new File(Environment.getExternalStorageDirectory(), AUDIO_FOLDER + "/" + sessionFolderName);
         boolean isCreated = file.mkdirs();
 
-        if(isCreated)
+        if (isCreated)
             return file;
         else
             return null;
@@ -319,33 +318,33 @@ public class MainActivity extends AppCompatActivity {
         try {
             SpeechRecognizerSetup setup = SpeechRecognizerSetup.defaultSetup();
 
-            if(isRussian) {
+            if (isRussian) {
                 setup.setAcousticModel(new File(dir, "ru-ptm"))
                         .setDictionary(new File(dir, "ru.dic"));
-            }else {
+            } else {
                 setup.setAcousticModel(new File(dir, "en-us-ptm"))
                         .setDictionary(new File(dir, "cmudict-en-us.dict"));
             }
 
-                    setup.setKeywordThreshold((float) Math.pow(1,-threshold));
-            if(audioSessionFolder != null)
-                        setup.setRawLogDir(audioSessionFolder);
+            setup.setKeywordThreshold((float) Math.pow(1, -threshold));
+            if (audioSessionFolder != null)
+                setup.setRawLogDir(audioSessionFolder);
 
-                    //.setBoolean("-remove_noise", false)
+            //.setBoolean("-remove_noise", false)
 
-                    recognizer = setup.getRecognizer();
-        }catch (Exception e){
-            Log.wtf(TAG,e);
+            recognizer = setup.getRecognizer();
+        } catch (Exception e) {
+            Log.wtf(TAG, e);
         }
 
         recognizer.addListener(new recognizerListener());
 
-        TextToGrammar.checkIfWordsAreInDictionary(recognizer.getDecoder(),text);
+        TextToGrammar.checkIfWordsAreInDictionary(recognizer.getDecoder(), text);
 
-        String menuGrammar = TextToGrammar.convertTextToJSGF(text,recognizer.getDecoder());
-        File file = TextToGrammar.saveJSFGToFile("test",menuGrammar,dir);
+        String menuGrammar = TextToGrammar.convertTextToJSGF(text, recognizer.getDecoder());
+        File file = TextToGrammar.saveJSFGToFile("test", menuGrammar, dir);
 
-        recognizer.addGrammarSearch(MENU_SEARCH,file);
+        recognizer.addGrammarSearch(MENU_SEARCH, file);
 
         //progressDialog.dismiss();
     }
@@ -355,7 +354,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        if(recognizer != null){
+        if (recognizer != null) {
             recognizer.cancel();
             recognizer.shutdown();
         }
@@ -364,22 +363,22 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        if(recognizer != null)
+        if (recognizer != null)
             recognizer.stop();
         isPocketOnGoing = false;
         toolbar.setTitle(R.string.app_name);
     }
 
-    class recognizerListener implements edu.cmu.pocketsphinx.RecognitionListener{
+    class recognizerListener implements edu.cmu.pocketsphinx.RecognitionListener {
         @Override
         public void onBeginningOfSpeech() {
-            Log.wtf(TAG,"Start of the Speech");
+            Log.wtf(TAG, "Start of the Speech");
             partialResultsView.show();
         }
 
         @Override
         public void onEndOfSpeech() {
-            Log.wtf(TAG,"End of the Speech");
+            Log.wtf(TAG, "End of the Speech");
         }
 
         @Override
@@ -394,7 +393,7 @@ public class MainActivity extends AppCompatActivity {
 
 
             String str = controller.processData(recognizedWords);
-            if(str != null)
+            if (str != null)
                 indexOfNewSequence = text.lastIndexOf(str);
 
 //            String recd = "";
@@ -410,13 +409,13 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onResult(Hypothesis hypothesis) {
-            if(hypothesis != null)
-                Log.wtf(TAG,"End result: " + hypothesis.getHypstr());
+            if (hypothesis != null)
+                Log.wtf(TAG, "End result: " + hypothesis.getHypstr());
         }
 
         @Override
         public void onError(Exception e) {
-            Log.wtf(TAG,e);
+            Log.wtf(TAG, e);
         }
 
         @Override
@@ -425,7 +424,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    class RecognizerSetup extends AsyncTask<Void,Void,Exception>{
+    class RecognizerSetup extends AsyncTask<Void, Void, Exception> {
 
         AppCompatActivity context;
         String text;
@@ -439,23 +438,23 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Exception e) {
-            if(e != null) {
-                Log.wtf(TAG,e);
+            if (e != null) {
+                Log.wtf(TAG, e);
                 Snackbar.make(context.findViewById(R.id.container), "Exception with Voice", Snackbar.LENGTH_SHORT).show();
-            }else {
+            } else {
                 toolbar.setTitle(R.string.app_name);
                 recognizerButton.show();
-                Toast.makeText(context,"Threshold = " + threshold,Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Threshold = " + threshold, Toast.LENGTH_SHORT).show();
             }
         }
 
         @Override
         protected Exception doInBackground(Void... voids) {
-            try{
+            try {
                 Assets assets = new Assets(context);
                 File assetsDir = assets.syncAssets();
-                setupRecognizer(assetsDir,text,isRussian);
-            }catch (Exception e){
+                setupRecognizer(assetsDir, text, isRussian);
+            } catch (Exception e) {
                 return e;
             }
 
@@ -482,7 +481,6 @@ public class MainActivity extends AppCompatActivity {
             "The annotations capture insights by the student’s teacher, using the features of quality, with a view to establishing the level of achievement the text reflects. The purpose of the annotations is to make the teacher's thinking visible. The annotations were confirmed by the Quality Assurance group, consisting of practicing English teachers and representatives of the Inspectorate, the SEC and JCT. \n" +
             " \n" +
             "The purpose of these examples is to support teachers' professional development. They are not to be used for any other purpose. More examples will be added over time.";
-
 
 
 //    public boolean testRecognizedWords(){

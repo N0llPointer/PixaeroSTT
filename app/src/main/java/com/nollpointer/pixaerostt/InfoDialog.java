@@ -13,10 +13,10 @@ public class InfoDialog extends BottomSheetDialogFragment {
 
     public static final String INFO = "info";
 
-    public static InfoDialog getInstance(String info){
+    public static InfoDialog getInstance(String info) {
         InfoDialog dialog = new InfoDialog();
         Bundle args = new Bundle();
-        args.putString(INFO,info);
+        args.putString(INFO, info);
         dialog.setArguments(args);
         return dialog;
     }
