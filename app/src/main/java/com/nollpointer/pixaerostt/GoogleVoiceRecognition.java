@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.os.Build;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -106,6 +107,24 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         //recognizedText.setText("Нажмите Recognize и начните говорить");
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        AudioManager audio = ((AudioManager) getSystemService(Context.AUDIO_SERVICE));
+        audio.setStreamMute(AudioManager.STREAM_MUSIC,true);
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+
+        AudioManager audio = ((AudioManager) getSystemService(Context.AUDIO_SERVICE));
+        audio.setStreamMute(AudioManager.STREAM_MUSIC,false);
+    }
+
     private void initializeToolbar() {
         toolbar.inflateMenu(R.menu.recognizer_toolbar_menu);
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
@@ -193,7 +212,7 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 25 * 1000);
         //intent.putExtra(RecognizerIntent.EXTRA_RESULTS_PENDINGINTENT,true);
 
-        intent.putExtra("android.speech.extra.DICTATION_MODE", true);
+        //intent.putExtra("android.speech.extra.DICTATION_MODE", true);
 
         if (Build.VERSION.SDK_INT >= 23)
             intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
@@ -294,6 +313,8 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         @Override
         public void onEndOfSpeech() {
             toolbar.setTitle("End");
+//            recognizer.stopListening();
+//            recognizer.startListening(recognizerIntent);
 
         }
 
@@ -310,7 +331,11 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
                 text = data.get(0);
             }
             Log.e(TAG, text);
-            toolbar.setTitle("Pixaero");
+            //toolbar.setTitle("Pixaero");
+            //recognizer.startListening(recognizerIntent);
+
+
+            recognizer.startListening(recognizerIntent);
         }
 
         @Override
