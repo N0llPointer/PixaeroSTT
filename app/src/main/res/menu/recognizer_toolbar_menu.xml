@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/font_up"
+        android:title="Font +"
+        android:icon="@drawable/ic_font_up"
+        app:showAsAction="always"
+        android:orderInCategory="1"
+        />
+
+    <item
+        android:id="@+id/font_down"
+        android:title="Font -"
+        android:icon="@drawable/ic_font_down"
+        app:showAsAction="always"
+        android:orderInCategory="2"
+        />
+
+    <item
+        android:id="@+id/more_info"
+        android:title="Dump Info"
+        android:icon="@drawable/ic_info"
+        app:showAsAction="always"
+        android:orderInCategory="4"
+        />
+
+
+</menu>

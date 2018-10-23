@@ -11,31 +11,43 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+
+        <android.support.v7.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?android:actionBarSize"
+            android:id="@+id/toolbar"
+            android:background="@color/colorPrimary"
+            app:title="@string/initialize"
+            app:titleTextColor="@android:color/white"
+            app:subtitleTextColor="#d1d1d1"/>
+
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:id="@+id/scrollView">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/original_text"
+                android:textColor="@android:color/black"
                 android:textAppearance="?android:textAppearanceMedium"/>
 
         </ScrollView>
 
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:background="#808080" />
+        <!--<View-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="3dp"-->
+            <!--android:background="#808080" />-->
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:id="@+id/recognized_text"
-            android:textAppearance="?android:textAppearanceMedium"/>
+        <!--<TextView-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="0dp"-->
+            <!--android:layout_weight="1"-->
+            <!--android:id="@+id/recognized_text"-->
+            <!--android:textAppearance="?android:textAppearanceMedium"/>-->
 
     </LinearLayout>
 
@@ -56,5 +68,16 @@
         android:layout_margin="10dp"
         android:id="@+id/language_button"
         android:layout_gravity="bottom|start"/>
+
+
+
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pick Language"
+        android:src="@drawable/ic_text"
+        android:layout_margin="10dp"
+        android:id="@+id/text_button"
+        android:layout_gravity="bottom|center_horizontal"/>
 
 </FrameLayout>

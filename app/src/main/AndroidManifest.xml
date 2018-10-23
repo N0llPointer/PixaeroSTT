@@ -13,27 +13,22 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-<<<<<<< HEAD
+
         <activity android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-||||||| merged common ancestors
-        <activity android:name=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-=======
-        <activity android:name=".MainActivity">
->>>>>>> master
-
+            </intent-filter>
         </activity>
 
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="f5b7caa163f185e8f54840f09251d8ce510101ce" />
 
-        <activity android:name=".GoogleVoiceRecognition">
+        <activity android:name=".GoogleVoiceRecognition"
+            android:configChanges="orientation|keyboardHidden|keyboard"
+            android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

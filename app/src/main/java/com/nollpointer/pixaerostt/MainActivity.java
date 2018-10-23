@@ -182,11 +182,11 @@ public class MainActivity extends AppCompatActivity {
                         seekbar.setProgress(threshold);
                         seekbar.show(container);
                         break;
-                    case R.id.scroll_speed:
-                        pickText();
-                        //askForAudioSave();
-                        //controller.increaseScrollDelta(2);
-                        break;
+//                    case R.id.scroll_speed:
+//                        pickText();
+//                        //askForAudioSave();
+//                        //controller.increaseScrollDelta(2);
+//                        break;
                     case R.id.more_info:
                         dumpToLogEverything();
                         break;

@@ -96,6 +96,8 @@ public class TextToGrammar {
         return builder.toString();
     }
 
+
+
     private static int getOptimalThreshold(int wordSize){
         if(wordSize == 1)
             return 1;
@@ -147,6 +149,15 @@ public class TextToGrammar {
             else
                 builder.setCharAt(i,' ');
         }
+
+        for(int i=0;i<builder.length();i++){
+            char symbol = builder.charAt(i);
+            if(Character.isLetterOrDigit(symbol))
+                continue;
+            else
+                builder.setCharAt(i,' ');
+        }
+
         return builder.toString();
     }
 
