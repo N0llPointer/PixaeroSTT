@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -19,7 +20,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
@@ -27,12 +27,10 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
-import com.nollpointer.pixaerostt.utils.TextToGrammar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +49,6 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
     FloatingActionButton recognizeButton;
     FloatingActionButton languageButton;
     FloatingActionButton textButton;
-    //TextView recognizedText;
     TextView contentText;
     ScrollView scrollView;
     ScrollViewController controller;
@@ -61,6 +58,8 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
     int textSize = 30;
 
     String partialResultsString = "null";
+    String previousRecognitionResults = " ";
+    boolean isPaused = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,7 +111,7 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         super.onStart();
 
         AudioManager audio = ((AudioManager) getSystemService(Context.AUDIO_SERVICE));
-        audio.setStreamMute(AudioManager.STREAM_MUSIC,true);
+        audio.setStreamMute(AudioManager.STREAM_MUSIC, true);
 
     }
 
@@ -120,9 +119,10 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
+        recognizer.stopListening();
 
         AudioManager audio = ((AudioManager) getSystemService(Context.AUDIO_SERVICE));
-        audio.setStreamMute(AudioManager.STREAM_MUSIC,false);
+        audio.setStreamMute(AudioManager.STREAM_MUSIC, false);
     }
 
     private void initializeToolbar() {
@@ -156,9 +156,17 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         recognizeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Intent intent = createIntentForRecognizer(null);
-                recognizer.startListening(recognizerIntent);
-                toolbar.setTitle("Listening");
+                if (isPaused) {
+                    recognizeButton.setImageResource(R.drawable.ic_clear);
+                    recognizer.startListening(recognizerIntent);
+                    toolbar.setTitle("Listening");
+                } else {
+                    recognizeButton.setImageResource(R.drawable.ic_voice);
+                    toolbar.setTitle("Stopped");
+                    recognizer.stopListening();
+                    previousRecognitionResults = "";
+                }
+                isPaused = !isPaused;
             }
         });
 
@@ -177,15 +185,16 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
                 });
                 String[] array = new String[languages.size()];
                 array = languages.toArray(array);
-                builder.setAdapter(new ArrayAdapter<String>(GoogleVoiceRecognition.this, android.R.layout.simple_list_item_1, array), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        recognizer.stopListening();
-                        recognizerIntent = createIntentForRecognizer(languages.get(which));
-                        Log.wtf(TAG, languages.get(which));
-                        dialog.dismiss();
-                    }
-                });
+                builder.setAdapter(new ArrayAdapter<String>(GoogleVoiceRecognition.this, android.R.layout.simple_list_item_1, array),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                recognizer.stopListening();
+                                recognizerIntent = createIntentForRecognizer(languages.get(which));
+                                Log.wtf(TAG, languages.get(which));
+                                dialog.dismiss();
+                            }
+                        });
                 builder.create().show();
             }
         });
@@ -193,11 +202,18 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
         textButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                partialResultsString = "ну вот теперь я смогу записывать обращения на камеру максимально оперативно и удобно";
+                partialResultsString = "в котором появится личный кабинет там я смогу писать тексты с компьютера";
                 Log.e(TAG, "onClick: textButton");
                 controller.processDataV2(partialResultsString);
             }
         });
+    }
+
+    private void resetRecognition() {
+        if (!isPaused)
+            recognizer.startListening(recognizerIntent);
+        else
+            recognizer.stopListening();
     }
 
     public Intent createIntentForRecognizer(String language) {
@@ -231,6 +247,12 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
 
         String d = data.getExtras().getString(RecognizerIntent.EXTRA_RESULTS_PENDINGINTENT);
         Log.e(TAG, "onActivityResult: " + d);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        recognizer.destroy();
     }
 
     public void searchForLanguages() {
@@ -320,7 +342,13 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
 
         @Override
         public void onError(int error) {
-
+            if ((error == SpeechRecognizer.ERROR_NO_MATCH)
+                    || (error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)) {
+                Log.d(TAG, "didn't recognize anything");
+                // keep going
+                resetRecognition();
+                //recognizer.startListening(recognizerIntent);
+            }
         }
 
         @Override
@@ -330,23 +358,26 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
                 ArrayList<String> data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 text = data.get(0);
             }
+
             Log.e(TAG, text);
+
+            previousRecognitionResults += text + " ";
             //toolbar.setTitle("Pixaero");
             //recognizer.startListening(recognizerIntent);
 
-
-            recognizer.startListening(recognizerIntent);
+            resetRecognition();
+            //recognizer.startListening(recognizerIntent);
         }
 
         @Override
         public void onPartialResults(Bundle partialResults) {
             if (partialResults.containsKey(SpeechRecognizer.RESULTS_RECOGNITION)) {
                 ArrayList<String> data = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                partialResultsString = data.get(0);
+                partialResultsString = previousRecognitionResults + data.get(0);
             }
             controller.processDataV2(partialResultsString);
 
-            Log.e(TAG, "onPartialResults: " + partialResultsString );
+            Log.e(TAG, "onPartialResults: " + partialResultsString);
             //recognizedText.setText(text);
         }
 
@@ -358,11 +389,14 @@ public class GoogleVoiceRecognition extends AppCompatActivity {
 
     private static final String demo = "Ну вот! Теперь я смогу записывать обращения на камеру максимально оперативно и удобно.\n" +
             "\n" +
-            "Я очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать с приложением. Программисты уже работают, чтобы добавить распознавание голоса. В этом случае скорость прокрутки текста автоматически подстроится под мою речь. А если я начну импровизировать, текст остановится и будет ждать пока я вернусь к чтению.\n" +
+            "Я очень буду ждать обновление, в котором появится личный кабинет. Там я смогу писать тексты с компьютера и синхронизировать " +
+            "с приложением. Программисты уже работают, чтобы добавить распознавание голоса. В этом случае скорость прокрутки " +
+            "текста автоматически подстроится под мою речь. А если я начну импровизировать, текст остановится и будет ждать пока я вернусь к чтению.\n" +
             "\n" +
-            "А еще, я теперь знаю, что инженеры PIXAERO разработали мобильный телесуфлер, который весит менее двухсот грамм, пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из самых доступных телесуфлеров в мире! Больше информации о суфлере PIXAERO MOBUS я всегда могу найти на сайте pixaero.pro.\n" +
+            "А еще, я теперь знаю, что инженеры PIXAERO разработали мобильный телесуфлер, который весит менее двухсот грамм, " +
+            "пристегивается к объективу камеры и сделан в России. Они постарались сделать его не только очень качественным и надежным, но и одним из " +
+            "самых доступных телесуфлеров в мире! Больше информации о суфлере PIXAERO MOBUS я всегда могу найти на сайте pixaero.pro.\n" +
             "\n" +
             "Если у меня возникнут идеи как сделать приложение или суфлер еще более удобным, я напишу ребятам из PIXAERO и они постараются воплотить это в жизнь!";
-
 
 }
