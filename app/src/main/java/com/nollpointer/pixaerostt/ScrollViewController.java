@@ -16,6 +16,7 @@ import static com.nollpointer.pixaerostt.MainActivity.TAG;
 public class ScrollViewController {
 
     private static final int SCROLL_TIME = 250;
+    //private static final int SCROLL_TIME_
 
     private ScrollView scrollView;
     private TextView contentText;
@@ -129,7 +130,7 @@ public class ScrollViewController {
                 continue;
             line = line.replaceAll("\\s+", " ");
 
-            if (recognized.contains(line)) {
+            if (recognized.contains(line) || containsWithoutEnding(line,recognized)) {
                 lineCountToScroll = i + 1;
                 Log.e(TAG, "Recognized " + line);
             }
@@ -142,10 +143,29 @@ public class ScrollViewController {
 
     }
 
+    private boolean containsWithoutEnding(String lineWithoutPunctuation, String recognizedText){
+        String[] words = lineWithoutPunctuation.split("\\s+");
+        double percent = 0;
+        int size = words.length;
+        int currentPosition = 0;
+        for (int i = 0; i < size; i++) {
+            String word = words[i];
+            String recognized = recognizedText.substring(currentPosition);
+            if(word.length() > 3)
+                word = word.substring(0,word.length() - 2);
+            if(recognized.contains(word)){
+                currentPosition = recognized.indexOf(word);
+                percent++;
+            }
+        }
+
+        return (percent/size) > 0.7;
+    }
+
     private void scrollLines(final int lines, final int lineHeight) {
         int currentScroll = scrollView.getScrollY();
         int scrollTo = currentScroll + lineHeight * (lines - 1);
-        scrollTo = scrollTo - (scrollTo % lineHeight);
+        //scrollTo = scrollTo - (scrollTo % lineHeight);
 
         //scrollView.smoothScrollTo(0, scrollTo);
 
